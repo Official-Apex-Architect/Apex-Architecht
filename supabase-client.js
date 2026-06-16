@@ -120,3 +120,184 @@ const ApexProjects = {
         } catch {}
     }
 };
+
+// ─── EMAIL VERIFICATION CODES ────────────────────────────────────────────────
+
+const ApexVerification = {
+    /** Generate a random 6-digit verification code */
+    generateCode() {
+        return String(Math.floor(100000 + Math.random() * 900000));
+    },
+
+    /** Send verification code to user email via Gmail MCP */
+    async sendVerificationCodeEmail(email, code) {
+        try {
+            const response = await fetch('https://mcp.zapier.com/api/v1/connect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'send_gmail_message',
+                    params: {
+                        to: email,
+                        subject: 'Your Apex Architect Verification Code',
+                        body: `
+Your verification code is: <strong>${code}</strong>
+
+This code expires in 15 minutes.
+
+If you didn't request this code, please ignore this email.
+
+— Apex Architect Team
+                        `
+                    }
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to send email: ${response.statusText}`);
+            }
+            return { ok: true };
+        } catch (err) {
+            console.error('[ApexVerification] Email send failed:', err);
+            return { ok: false, error: err.message };
+        }
+    },
+
+    /** Create verification code record and send email */
+    async requestVerificationCode(email) {
+        const { data: { session } } = await db.auth.getSession();
+        if (!session) return { ok: false, error: 'Not authenticated' };
+
+        const code = this.generateCode();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+
+        // Insert verification code into database
+        const { data, error } = await db.from('verification_codes').insert({
+            user_id: session.user.id,
+            email,
+            code,
+            expires_at: expiresAt.toISOString()
+        }).select().single();
+
+        if (error) {
+            console.error('[ApexVerification] DB insert failed:', error);
+            return { ok: false, error: error.message };
+        }
+
+        // Send code via Gmail
+        const emailResult = await this.sendVerificationCodeEmail(email, code);
+        if (!emailResult.ok) {
+            // Try to delete the code record if email send failed
+            await db.from('verification_codes').delete().eq('id', data.id);
+            return emailResult;
+        }
+
+        return { ok: true, codeId: data.id };
+    },
+
+    /** Verify the code entered by user */
+    async verifyCode(email, userEnteredCode) {
+        const { data: { session } } = await db.auth.getSession();
+        if (!session) return { ok: false, error: 'Not authenticated' };
+
+        // Get the latest verification code for this user
+        const { data: codes, error: queryError } = await db
+            .from('verification_codes')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .eq('email', email)
+            .eq('verified', false)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (queryError) {
+            return { ok: false, error: queryError.message };
+        }
+
+        if (!codes || codes.length === 0) {
+            return { ok: false, error: 'No verification code found. Please request a new code.' };
+        }
+
+        const verificationRecord = codes[0];
+
+        // Check if expired
+        if (new Date() > new Date(verificationRecord.expires_at)) {
+            return { ok: false, error: 'Verification code expired. Please request a new code.' };
+        }
+
+        // Check attempt limit
+        if (verificationRecord.attempts >= verificationRecord.max_attempts) {
+            return { ok: false, error: 'Too many failed attempts. Please request a new code.' };
+        }
+
+        // Check if code matches
+        if (userEnteredCode !== verificationRecord.code) {
+            // Increment attempts
+            await db
+                .from('verification_codes')
+                .update({ attempts: verificationRecord.attempts + 1 })
+                .eq('id', verificationRecord.id);
+            
+            return { ok: false, error: 'Invalid code. Please try again.' };
+        }
+
+        // Code is valid! Mark as verified
+        const { error: updateError } = await db
+            .from('verification_codes')
+            .update({ verified: true })
+            .eq('id', verificationRecord.id);
+
+        if (updateError) {
+            return { ok: false, error: updateError.message };
+        }
+
+        return { ok: true };
+    },
+
+    /** Check if user has verified their email */
+    async isVerified(email) {
+        const { data: { session } } = await db.auth.getSession();
+        if (!session) return false;
+
+        const { data, error } = await db
+            .from('verification_codes')
+            .select('verified')
+            .eq('user_id', session.user.id)
+            .eq('email', email)
+            .eq('verified', true)
+            .limit(1);
+
+        if (error) {
+            console.error('[ApexVerification] Check failed:', error);
+            return false;
+        }
+
+        return data && data.length > 0;
+    },
+
+    /** Get remaining time for current verification code */
+    async getCodeExpiryTime(email) {
+        const { data: { session } } = await db.auth.getSession();
+        if (!session) return null;
+
+        const { data } = await db
+            .from('verification_codes')
+            .select('expires_at')
+            .eq('user_id', session.user.id)
+            .eq('email', email)
+            .eq('verified', false)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (data && data.length > 0) {
+            const expiresAt = new Date(data[0].expires_at);
+            const now = new Date();
+            const secondsLeft = Math.max(0, Math.floor((expiresAt - now) / 1000));
+            return secondsLeft;
+        }
+        return null;
+    }
+};
+

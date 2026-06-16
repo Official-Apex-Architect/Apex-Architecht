@@ -1,0 +1,17 @@
+{
+  "id": "5c44ab5c-4ae2-4965-9644-7dcec6262377",
+  "name": "Apex-Architecht-project-feature-phase-1-voxel-engine",
+  "projectResources": {
+    "resources": [
+      {
+        "folderUri": "file:///Users/xplorersresth/Apex-Architecht-project-feature-phase-1-voxel-engine"
+      }
+    ]
+  },
+  "settings": {
+    "fileAccessPolicy": "AGENT_SETTING_POLICY_ASK",
+    "internetPolicy": "AGENT_SETTING_POLICY_ASK",
+    "autoExecutionPolicy": "CASCADE_COMMANDS_AUTO_EXECUTION_OFF",
+    "artifactReviewMode": "ARTIFACT_REVIEW_MODE_ALWAYS"
+  }
+}

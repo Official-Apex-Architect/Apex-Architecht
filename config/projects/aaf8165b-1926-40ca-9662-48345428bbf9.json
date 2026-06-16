@@ -1,0 +1,14 @@
+{
+  "id": "aaf8165b-1926-40ca-9662-48345428bbf9",
+  "name": "Language Learning Program",
+  "projectResources": {
+    "resources": [
+      {
+        "gitFolder": {
+          "folderUri": "file:///Users/xplorersresth/Study/Website/Language%20Learning%20Program",
+          "allowWrite": true
+        }
+      }
+    ]
+  }
+}

@@ -705,6 +705,8 @@ class App {
                 dlAnchorElem.setAttribute("download", "f1_circuit_data.json");
                 dlAnchorElem.click();
             }
+
+
         };
     }
     setTool(tool) {
@@ -1400,6 +1402,8 @@ class App {
         window.history.replaceState({}, '', `?id=${id}`);
         this.resize();
         this.draw();
+
+
     }
     loadProject(id) {
         const projects = this.getAllProjects();

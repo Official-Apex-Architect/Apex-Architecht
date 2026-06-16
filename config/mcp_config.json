@@ -1,0 +1,7 @@
+{
+  "servers": {
+    "Zapier": {
+      "url": "https://mcp.zapier.com/api/v1/connect"
+    }
+  }
+}

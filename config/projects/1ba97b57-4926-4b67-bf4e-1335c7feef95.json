@@ -1,0 +1,15 @@
+{
+  "id": "1ba97b57-4926-4b67-bf4e-1335c7feef95",
+  "name": "Apex Arcitecht",
+  "projectResources": {
+    "resources": [
+      {
+        "gitFolder": {
+          "folderUri": "file:///Users/xplorersresth/F1%20track/ApexArchitect/WebBundle/Apex%20Arcitecht",
+          "defaultBranch": "main",
+          "allowWrite": true
+        }
+      }
+    ]
+  }
+}

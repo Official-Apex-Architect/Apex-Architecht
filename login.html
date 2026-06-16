@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,17 @@
     <meta name="description" content="Sign in to Apex Architect and access your Formula 1 circuit design workspace.">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         :root {
             --red: #e10600;
@@ -17,10 +26,10 @@
             --bg: #030407;
             --surface: #06080d;
             --surface2: #0b0f19;
-            --border: rgba(255,255,255,0.04);
-            --border-focus: rgba(225,6,0,0.8);
+            --border: rgba(255, 255, 255, 0.04);
+            --border-focus: rgba(225, 6, 0, 0.8);
             --text: #e2e8f0;
-            --text-muted: rgba(255,255,255,0.45);
+            --text-muted: rgba(255, 255, 255, 0.45);
         }
 
         body {
@@ -49,8 +58,8 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(225,6,0,0.12) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 50% at 80% 20%, rgba(59,130,246,0.08) 0%, transparent 60%);
+                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(225, 6, 0, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
             pointer-events: none;
         }
 
@@ -61,25 +70,64 @@
             overflow: hidden;
             pointer-events: none;
         }
+
         .racing-lines span {
             display: block;
             position: absolute;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(225,6,0,0.35), transparent);
+            background: linear-gradient(90deg, transparent, rgba(225, 6, 0, 0.35), transparent);
             animation: raceLine 4s linear infinite;
             opacity: 0;
         }
-        .racing-lines span:nth-child(1) { width: 65%; top: 22%; animation-delay: 0s; }
-        .racing-lines span:nth-child(2) { width: 45%; top: 38%; animation-delay: 1.3s; }
-        .racing-lines span:nth-child(3) { width: 75%; top: 55%; animation-delay: 0.7s; }
-        .racing-lines span:nth-child(4) { width: 35%; top: 70%; animation-delay: 2s; }
-        .racing-lines span:nth-child(5) { width: 55%; top: 84%; animation-delay: 0.4s; }
+
+        .racing-lines span:nth-child(1) {
+            width: 65%;
+            top: 22%;
+            animation-delay: 0s;
+        }
+
+        .racing-lines span:nth-child(2) {
+            width: 45%;
+            top: 38%;
+            animation-delay: 1.3s;
+        }
+
+        .racing-lines span:nth-child(3) {
+            width: 75%;
+            top: 55%;
+            animation-delay: 0.7s;
+        }
+
+        .racing-lines span:nth-child(4) {
+            width: 35%;
+            top: 70%;
+            animation-delay: 2s;
+        }
+
+        .racing-lines span:nth-child(5) {
+            width: 55%;
+            top: 84%;
+            animation-delay: 0.4s;
+        }
 
         @keyframes raceLine {
-            0%   { left: -100%; opacity: 0; }
-            10%  { opacity: 1; }
-            80%  { opacity: 1; }
-            100% { left: 100%; opacity: 0; }
+            0% {
+                left: -100%;
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                left: 100%;
+                opacity: 0;
+            }
         }
 
         /* Big background track SVG */
@@ -111,7 +159,7 @@
             border-radius: 4px;
             transform: skewX(-10deg);
             flex-shrink: 0;
-            box-shadow: 0 0 32px rgba(225,6,0,0.4);
+            box-shadow: 0 0 32px rgba(225, 6, 0, 0.4);
         }
 
         .logo-text {
@@ -160,7 +208,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             font-size: 12px;
             font-weight: 500;
             letter-spacing: 1.5px;
@@ -188,13 +236,15 @@
             border-left: 1px solid var(--border);
             position: relative;
             overflow-y: auto;
-            box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+            box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
         }
 
         .right-panel::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 4px;
             background: linear-gradient(90deg, var(--red), #ff4d4d, var(--red));
             background-size: 200% 100%;
@@ -202,8 +252,13 @@
         }
 
         @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
         }
 
         .form-header {
@@ -263,7 +318,7 @@
         .auth-tab.active {
             background: var(--red);
             color: #fff;
-            box-shadow: 0 4px 16px rgba(225,6,0,0.35);
+            box-shadow: 0 4px 16px rgba(225, 6, 0, 0.35);
         }
 
         /* Form fields */
@@ -271,7 +326,9 @@
             margin-bottom: 18px;
         }
 
-        .form-group.hidden { display: none; }
+        .form-group.hidden {
+            display: none;
+        }
 
         label {
             display: block;
@@ -287,7 +344,7 @@
         input[type="email"],
         input[type="password"] {
             width: 100%;
-            background: rgba(255,255,255,0.02);
+            background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 14px 16px;
@@ -300,15 +357,21 @@
 
         input:focus {
             border-color: var(--border-focus);
-            background: rgba(225,6,0,0.03);
-            box-shadow: 0 0 0 4px rgba(225,6,0,0.15);
+            background: rgba(225, 6, 0, 0.03);
+            box-shadow: 0 0 0 4px rgba(225, 6, 0, 0.15);
             transform: translateY(-1px);
         }
 
-        input::placeholder { color: rgba(255,255,255,0.2); }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
 
         /* Password strength */
-        #strength-wrap { margin-top: 8px; display: none; }
+        #strength-wrap {
+            margin-top: 8px;
+            display: none;
+        }
+
         .strength-bar {
             height: 3px;
             border-radius: 2px;
@@ -316,12 +379,14 @@
             overflow: hidden;
             margin-bottom: 4px;
         }
+
         .strength-fill {
             height: 100%;
             border-radius: 2px;
             width: 0%;
             transition: width 0.3s, background 0.3s;
         }
+
         #strength-label {
             font-size: 10px;
             font-weight: 600;
@@ -333,8 +398,8 @@
         /* Error */
         #auth-error {
             display: none;
-            background: rgba(225,6,0,0.1);
-            border: 1px solid rgba(225,6,0,0.3);
+            background: rgba(225, 6, 0, 0.1);
+            border: 1px solid rgba(225, 6, 0, 0.3);
             border-radius: 10px;
             padding: 12px 16px;
             color: #ff8080;
@@ -344,7 +409,17 @@
             animation: fadeIn 0.2s ease;
         }
 
-        @keyframes fadeIn { from { opacity:0; transform:translateY(-4px);} to { opacity:1; transform:none; } }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
 
         /* Submit */
         #auth-submit {
@@ -365,24 +440,30 @@
             margin-bottom: 20px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(225,6,0,0.3);
+            box-shadow: 0 4px 15px rgba(225, 6, 0, 0.3);
         }
 
         #auth-submit::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transform: translateX(-100%);
             transition: transform 0.5s;
         }
 
-        #auth-submit:hover { 
-            transform: translateY(-3px) scale(1.02); 
-            box-shadow: 0 12px 30px rgba(225,6,0,0.5); 
+        #auth-submit:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(225, 6, 0, 0.5);
         }
-        #auth-submit:hover::after { transform: translateX(100%); }
-        #auth-submit:active { transform: translateY(0) scale(0.98); }
+
+        #auth-submit:hover::after {
+            transform: translateX(100%);
+        }
+
+        #auth-submit:active {
+            transform: translateY(0) scale(0.98);
+        }
 
         #auth-submit.loading {
             pointer-events: none;
@@ -391,15 +472,21 @@
 
         .spinner {
             display: inline-block;
-            width: 14px; height: 14px;
-            border: 2px solid rgba(255,255,255,0.3);
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-top-color: #fff;
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
             vertical-align: middle;
             margin-right: 8px;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         .divider {
             display: flex;
@@ -409,7 +496,9 @@
             color: var(--text-muted);
             font-size: 11px;
         }
-        .divider::before, .divider::after {
+
+        .divider::before,
+        .divider::after {
             content: '';
             flex: 1;
             height: 1px;
@@ -429,9 +518,10 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .guest-btn:hover {
-            background: rgba(255,255,255,0.04);
-            border-color: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.2);
             color: var(--text);
         }
 
@@ -444,8 +534,14 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .left-panel { display: none; }
-            body { justify-content: center; }
+            .left-panel {
+                display: none;
+            }
+
+            body {
+                justify-content: center;
+            }
+
             .right-panel {
                 width: 100%;
                 border-left: none;
@@ -454,6 +550,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- Left decorative panel -->
@@ -463,11 +560,13 @@
         </div>
 
         <!-- Large background track illustration -->
-        <svg class="bg-track" width="500" height="500" viewBox="0 0 200 200" fill="none" stroke="white" stroke-width="3">
-            <path d="M30,100 C30,45 90,20 120,20 C160,20 175,50 175,80 C175,110 155,125 155,125 C155,125 170,140 165,160 C158,185 130,185 110,175 C85,162 70,150 50,155 C25,161 20,140 20,120 C20,110 30,100 30,100Z"/>
-            <circle cx="45" cy="100" r="4" fill="white" stroke="none" opacity="0.6"/>
-            <circle cx="120" cy="25" r="4" fill="white" stroke="none" opacity="0.6"/>
-            <circle cx="172" cy="90" r="4" fill="white" stroke="none" opacity="0.6"/>
+        <svg class="bg-track" width="500" height="500" viewBox="0 0 200 200" fill="none" stroke="white"
+            stroke-width="3">
+            <path
+                d="M30,100 C30,45 90,20 120,20 C160,20 175,50 175,80 C175,110 155,125 155,125 C155,125 170,140 165,160 C158,185 130,185 110,175 C85,162 70,150 50,155 C25,161 20,140 20,120 C20,110 30,100 30,100Z" />
+            <circle cx="45" cy="100" r="4" fill="white" stroke="none" opacity="0.6" />
+            <circle cx="120" cy="25" r="4" fill="white" stroke="none" opacity="0.6" />
+            <circle cx="172" cy="90" r="4" fill="white" stroke="none" opacity="0.6" />
         </svg>
 
         <div class="left-content">
@@ -481,14 +580,23 @@
             </h1>
 
             <p class="hero-sub">
-                The professional-grade platform for creating, analysing, and refining Formula 1 circuit layouts — from hairpins to high-speed sweepers.
+                The professional-grade platform for creating, analysing, and refining Formula 1 circuit layouts — from
+                hairpins to high-speed sweepers.
             </p>
 
             <div class="feature-list">
-                <div class="feature-item"><div class="feature-dot"></div>Precision node-based circuit editor</div>
-                <div class="feature-item"><div class="feature-dot"></div>AI-powered track analysis & coaching</div>
-                <div class="feature-item"><div class="feature-dot"></div>DRS zones, sector markers & corner profiling</div>
-                <div class="feature-item"><div class="feature-dot"></div>Export to PNG & JSON for sharing</div>
+                <div class="feature-item">
+                    <div class="feature-dot"></div>Precision node-based circuit editor
+                </div>
+                <div class="feature-item">
+                    <div class="feature-dot"></div>AI-powered track analysis & coaching
+                </div>
+                <div class="feature-item">
+                    <div class="feature-dot"></div>DRS zones, sector markers & corner profiling
+                </div>
+                <div class="feature-item">
+                    <div class="feature-dot"></div>Export to PNG & JSON for sharing
+                </div>
             </div>
         </div>
     </div>
@@ -527,7 +635,9 @@
             <label for="auth-password">Password</label>
             <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password">
             <div id="strength-wrap">
-                <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+                <div class="strength-bar">
+                    <div class="strength-fill" id="strength-fill"></div>
+                </div>
                 <span id="strength-label">Strength</span>
             </div>
         </div>
@@ -542,10 +652,10 @@
 
     <script src="supabase-client.js"></script>
     <script>
-        // If already logged in, skip to dashboard
+        // If already logged in and verified, skip to dashboard
         (async () => {
             const user = await ApexAuth.getUser();
-            if (user) window.location.replace('index.html');
+            if (user && user.email_confirmed_at) window.location.replace('index.html');
         })();
 
         let mode = 'signin';
@@ -573,7 +683,7 @@
         }
         function clearError() { setError(''); }
 
-        document.getElementById('auth-password').addEventListener('input', function() {
+        document.getElementById('auth-password').addEventListener('input', function () {
             if (mode !== 'signup') return;
             const val = this.value;
             let score = 0;
@@ -582,9 +692,9 @@
             if (/[A-Z]/.test(val)) score++;
             if (/[0-9]/.test(val)) score++;
             if (/[^A-Za-z0-9]/.test(val)) score++;
-            const colors = ['#e10600','#ff6a00','#ffcc00','#22c55e','#00d4aa'];
-            const labels = ['Very weak','Weak','Fair','Strong','Excellent'];
-            const pct    = [20, 40, 60, 80, 100];
+            const colors = ['#e10600', '#ff6a00', '#ffcc00', '#22c55e', '#00d4aa'];
+            const labels = ['Very weak', 'Weak', 'Fair', 'Strong', 'Excellent'];
+            const pct = [20, 40, 60, 80, 100];
             const i = Math.max(0, score - 1);
             const fill = document.getElementById('strength-fill');
             fill.style.width = pct[i] + '%';
@@ -595,9 +705,9 @@
 
         async function handleSubmit() {
             clearError();
-            const email    = document.getElementById('auth-email').value.trim();
+            const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value;
-            const name     = document.getElementById('auth-name').value.trim();
+            const name = document.getElementById('auth-name').value.trim();
 
             if (!email || !password) { setError('Please fill in all required fields.'); return; }
             if (!email.includes('@')) { setError('Please enter a valid email address.'); return; }
@@ -617,6 +727,21 @@
                 setError(result.error);
                 return;
             }
+
+            // Signup success: show verification message
+            if (mode === 'signup') {
+                btn.classList.remove('loading');
+                btn.textContent = 'Check Your Email';
+                btn.disabled = true;
+                document.getElementById('auth-error').style.display = 'none';
+                const msg = document.createElement('div');
+                msg.style.cssText = 'background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:12px 16px;color:#4ade80;font-size:13px;line-height:1.6;margin-top:12px;text-align:center';
+                msg.textContent = 'Account created! Check your email to verify your account before signing in.';
+                btn.parentNode.insertBefore(msg, btn.nextSibling);
+                return;
+            }
+
+            // Sign in success: redirect to dashboard
             window.location.replace('index.html');
         }
 
@@ -624,4 +749,5 @@
     </script>
 
 </body>
+
 </html>

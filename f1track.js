@@ -36,6 +36,9 @@ class App {
         this.pxPerUnit = 100;
         // Track Features
         this.isClosedTrack = false;
+        this.selectedTrackTags = [];
+        this.selectedRallyFormat = 'normal';
+        this.membershipAccess = { tags: [], tier: null, tagLabels: {}, lengthLimits: {}, hasSubscription: false };
         // Background
         this.bgImage = null;
         this.bgOpacity = 0.5;
@@ -52,11 +55,303 @@ class App {
         this.ctx = this.canvas.getContext('2d');
         this.init();
     }
-    init() {
+    async init() {
+        await this.waitForAuthBootstrap();
+        await this.loadMembershipAccess();
         this.resize();
         this.setupEventListeners();
         this.setupUIListeners();
         this.handleRouting();
+    }
+    async waitForAuthBootstrap() {
+        if (!window.supabase || !window.supabase.auth)
+            return;
+        for (let attempt = 0; attempt < 20; attempt++) {
+            try {
+                const { data: { user } } = await window.supabase.auth.getUser();
+                if (user)
+                    return;
+            }
+            catch (error) {
+                console.warn('[Track Tags] Auth bootstrap check failed:', error);
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 150));
+        }
+    }
+    async loadMembershipAccess() {
+        if (!window.ApexMembership) {
+            this.renderTrackTagSelector();
+            return;
+        }
+        try {
+            this.membershipAccess = await ApexMembership.getAvailableTags();
+        }
+        catch (error) {
+            console.warn('[Track Tags] Membership lookup failed:', error);
+            this.membershipAccess = { tags: [], tier: null, tagLabels: {}, lengthLimits: {}, hasSubscription: false };
+        }
+        this.selectedTrackTags = this.normalizeTrackTags(this.selectedTrackTags);
+        if (this.membershipAccess.tags.length === 1 && this.selectedTrackTags.length === 0) {
+            this.selectedTrackTags = [...this.membershipAccess.tags];
+        }
+        this.renderTrackTagSelector();
+        this.renderSelectedTrackTags();
+        this.updateCloseCircuitAvailability();
+    }
+    normalizeTrackTags(tags) {
+        const availableTags = (this.membershipAccess && this.membershipAccess.tags) || [];
+        const uniqueTags = Array.from(new Set((tags || []).filter(tag => availableTags.includes(tag))));
+        if (window.ApexMembership && !ApexMembership.isValidTagCombination(uniqueTags)) {
+            return uniqueTags.filter(tag => !ApexMembership.RALLY_TAGS.includes(tag));
+        }
+        return uniqueTags;
+    }
+    getTagLabel(tag) {
+        return (this.membershipAccess.tagLabels || {})[tag] || tag;
+    }
+    getSelectedTagLabels() {
+        return this.selectedTrackTags.map(tag => this.getTagLabel(tag));
+    }
+    renderSelectedTrackTags() {
+        const el = document.getElementById('selected-track-tags');
+        if (!el)
+            return;
+        if (!this.hasSubscription()) {
+            el.innerText = 'AI DETECTS: EVALUATING...';
+            return;
+        }
+        if (this.selectedTrackTags.length === 0) {
+            el.innerText = 'SELECT TRACK TAGS';
+            return;
+        }
+        el.innerText = this.getSelectedTagLabels().join(' + ').toUpperCase();
+    }
+    hasPremiumAccess() {
+        return (this.membershipAccess.tags || []).length > 0;
+    }
+    hasSubscription() {
+        return !!(this.membershipAccess && this.membershipAccess.hasSubscription);
+    }
+    describeSelectedTagRules(tags) {
+        if (!tags || tags.length === 0) {
+            return 'Select one or more tags to define what this layout should support.';
+        }
+        return tags.map(tag => {
+            const limits = (this.membershipAccess.lengthLimits || {})[tag];
+            if (!limits)
+                return this.getTagLabel(tag);
+            if (tag === 'rallying' && limits.variants) {
+                const selectedVariant = limits.variants[this.selectedRallyFormat];
+                if (selectedVariant) {
+                    const closedState = selectedVariant.closed ? 'closed' : 'open';
+                    const totalText = selectedVariant.totalMin && selectedVariant.totalMax
+                        ? ` ${selectedVariant.totalMin}-${selectedVariant.totalMax} km total.`
+                        : '';
+                    return `${this.getTagLabel(tag)} (${this.selectedRallyFormat.toUpperCase()}): ${selectedVariant.min}-${selectedVariant.max} km ${closedState}.${totalText}`;
+                }
+                return `${this.getTagLabel(tag)}: normal SS 1-2 km closed, stage 3-50 km open (300-350 km total), raid 100-800 km open (3,000-8,000 km total).`;
+            }
+            const closedState = limits.closed ? 'closed' : 'open';
+            return `${this.getTagLabel(tag)}: ${limits.min}-${limits.max} ${limits.unit} ${closedState} track.`;
+        }).join(' ');
+    }
+    renderRallyFormatSelector() {
+        const container = document.getElementById('rally-format-selector');
+        if (!container)
+            return;
+        const rallyLimits = (((this.membershipAccess || {}).lengthLimits || {}).rallying || {}).variants;
+        if (!this.hasSubscription() || !this.selectedTrackTags.includes('rallying') || !rallyLimits) {
+            container.innerHTML = '';
+            return;
+        }
+        const formatLabels = {
+            normal: 'Normal SS',
+            stage: 'Stage Rally',
+            raid: 'Raid Rally'
+        };
+        container.innerHTML = `
+            <div class="rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+                <div class="text-[10px] font-bold uppercase tracking-widest text-[#4ade80]">Rally Format</div>
+                <div class="mt-2 grid grid-cols-1 gap-2">
+                    ${Object.entries(rallyLimits).map(([key, limits]) => `
+                        <label class="flex items-center justify-between gap-3 rounded-lg border ${this.selectedRallyFormat === key ? 'border-[#4ade80]/40 bg-[#4ade80]/10 text-white' : 'border-white/10 bg-black/30 text-white/80'} px-3 py-2 cursor-pointer">
+                            <span class="text-[11px] font-bold uppercase tracking-wider">${formatLabels[key] || key}</span>
+                            <input type="radio" name="rally-format" class="h-4 w-4 accent-[#22c55e]" value="${key}" ${this.selectedRallyFormat === key ? 'checked' : ''}>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        container.querySelectorAll('input[name="rally-format"]').forEach(input => {
+            input.addEventListener('change', (event) => {
+                this.selectedRallyFormat = event.currentTarget.value;
+                this.syncTrackClosureFromSelection();
+                this.renderRallyFormatSelector();
+                this.renderTrackTagSelector();
+                this.queueAutoSave();
+                this.draw();
+            });
+        });
+    }
+    selectedRallyLimits() {
+        const rallyLimits = (((this.membershipAccess || {}).lengthLimits || {}).rallying || {}).variants;
+        return rallyLimits ? rallyLimits[this.selectedRallyFormat] || null : null;
+    }
+    getActiveLengthRule() {
+        if (this.selectedTrackTags.includes('rallying')) {
+            const rallyRule = this.selectedRallyLimits();
+            if (rallyRule) {
+                return {
+                    min: rallyRule.min,
+                    max: rallyRule.max,
+                    unit: 'km',
+                    source: 'rally'
+                };
+            }
+        }
+        if (window.ApexMembership && this.membershipAccess.tier && this.selectedTrackTags.length > 0) {
+            const range = ApexMembership.getLengthLimitsForTags(this.selectedTrackTags, this.membershipAccess.tier);
+            if (range) {
+                return {
+                    min: range.min,
+                    max: range.max,
+                    unit: 'km',
+                    source: 'membership'
+                };
+            }
+        }
+        return { min: 0, max: 30, unit: 'km', source: 'default' };
+    }
+    getLengthLimitMessage() {
+        const rule = this.getActiveLengthRule();
+        const label = this.selectedTrackTags.length > 0
+            ? this.getSelectedTagLabels().join(' + ')
+            : 'this track';
+        return `Length limit for ${label}: ${rule.min}-${rule.max} ${rule.unit.toUpperCase()}.`;
+    }
+    canAddMoreTrackLength() {
+        const rule = this.getActiveLengthRule();
+        if (this.getTrackLengthKM() <= rule.max) {
+            return true;
+        }
+        alert(`Maximum track length reached. ${this.getLengthLimitMessage()}`);
+        return false;
+    }
+    currentSelectionAllowsClosedCircuit() {
+        if (!this.selectedTrackTags.includes('rallying'))
+            return true;
+        const rallyLimits = this.selectedRallyLimits();
+        return rallyLimits ? !!rallyLimits.closed : true;
+    }
+    syncTrackClosureFromSelection() {
+        if (this.currentSelectionAllowsClosedCircuit())
+            return;
+        this.isClosedTrack = false;
+    }
+    updateCloseCircuitAvailability() {
+        const closeBtn = document.getElementById('toggle-close-btn');
+        if (!closeBtn)
+            return;
+        const canClose = this.currentSelectionAllowsClosedCircuit();
+        if (!canClose) {
+            this.isClosedTrack = false;
+            closeBtn.classList.remove('toggle-closed');
+            closeBtn.style.display = 'none';
+            return;
+        }
+        closeBtn.style.display = '';
+        closeBtn.classList.toggle('toggle-closed', this.isClosedTrack);
+    }
+    renderTrackTagSelector() {
+        const selector = document.getElementById('track-tag-selector');
+        const noteEl = document.getElementById('membership-tag-note');
+        const rulesEl = document.getElementById('selected-tag-rules');
+        if (!selector || !noteEl || !rulesEl)
+            return;
+        const availableTags = this.membershipAccess.tags || [];
+        if (!this.hasSubscription()) {
+            noteEl.innerHTML = `No premium subscription is active. You can still build freely here, and the AI will classify the layout automatically.`;
+            selector.innerHTML = '';
+            this.renderRallyFormatSelector();
+            this.updateCloseCircuitAvailability();
+            rulesEl.textContent = 'Track tags stay optional until a premium subscription is active on this account.';
+            return;
+        }
+        const tierName = this.membershipAccess.tier && window.ApexMembership
+            ? ApexMembership.TIERS[this.membershipAccess.tier].name
+            : 'Premium Membership';
+        noteEl.textContent = `Active membership: ${tierName}`;
+        if (availableTags.length === 1) {
+            const onlyTag = availableTags[0];
+            selector.innerHTML = `
+                <div class="rounded-xl border border-[#a855f7]/30 bg-[#a855f7]/10 px-3 py-3">
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-[#d8b4fe]">Locked Track Tag</div>
+                    <div class="mt-1 text-sm font-semibold text-white">${this.getTagLabel(onlyTag)}</div>
+                </div>
+            `;
+            this.renderRallyFormatSelector();
+            this.updateCloseCircuitAvailability();
+            rulesEl.textContent = this.describeSelectedTagRules([onlyTag]);
+            return;
+        }
+        selector.innerHTML = availableTags.map(tag => {
+            const checked = this.selectedTrackTags.includes(tag);
+            const isRally = window.ApexMembership && ApexMembership.RALLY_TAGS.includes(tag);
+            const hasRallySelected = this.selectedTrackTags.some(selectedTag => ApexMembership.RALLY_TAGS.includes(selectedTag));
+            const hasCircuitSelected = this.selectedTrackTags.some(selectedTag => ApexMembership.CIRCUIT_TAGS.includes(selectedTag));
+            const disableForMix = checked
+                ? false
+                : (isRally && hasCircuitSelected) || (!isRally && hasRallySelected);
+            return `
+                <label class="flex items-center justify-between gap-3 rounded-xl border px-3 py-3 transition ${checked ? 'border-[#a855f7]/40 bg-[#a855f7]/10 text-white' : 'border-white/10 bg-black/20 text-white/80'} ${disableForMix ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:border-white/20'}">
+                    <span class="text-[11px] font-bold uppercase tracking-wider">${this.getTagLabel(tag)}</span>
+                    <input type="checkbox" class="track-tag-checkbox h-4 w-4 accent-[#a855f7]" data-tag="${tag}" ${checked ? 'checked' : ''} ${disableForMix ? 'disabled' : ''}>
+                </label>
+            `;
+        }).join('');
+        selector.querySelectorAll('.track-tag-checkbox').forEach(box => {
+            box.addEventListener('change', (event) => {
+                const input = event.currentTarget;
+                const next = new Set(this.selectedTrackTags);
+                if (input.checked)
+                    next.add(input.dataset.tag);
+                else
+                    next.delete(input.dataset.tag);
+                this.applySelectedTrackTags(Array.from(next));
+            });
+        });
+        this.renderRallyFormatSelector();
+        this.updateCloseCircuitAvailability();
+        rulesEl.textContent = this.describeSelectedTagRules(this.selectedTrackTags);
+    }
+    applySelectedTrackTags(tags) {
+        if (window.ApexMembership && !ApexMembership.isValidTagCombination(tags)) {
+            alert('Rallying cannot be combined with F1/F2/F3, Go-Karting, GT, Hypercar, or LMP before building the track.');
+            this.renderTrackTagSelector();
+            return false;
+        }
+        this.selectedTrackTags = this.normalizeTrackTags(tags);
+        if (this.selectedTrackTags.length === 0 && this.membershipAccess.tags.length === 1) {
+            this.selectedTrackTags = [...this.membershipAccess.tags];
+        }
+        if (!this.selectedTrackTags.includes('rallying')) {
+            this.selectedRallyFormat = 'normal';
+        }
+        this.syncTrackClosureFromSelection();
+        this.renderTrackTagSelector();
+        this.renderSelectedTrackTags();
+        this.queueAutoSave();
+        this.updateStats();
+        return true;
+    }
+    ensureTrackTagsSelected() {
+        if (!this.hasSubscription())
+            return true;
+        if (this.selectedTrackTags.length > 0)
+            return true;
+        alert('Select your track tag(s) before making the track.');
+        return false;
     }
     handleRouting() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -304,12 +599,13 @@ class App {
                     this.selectionBox = { start: world, end: world };
                 }
                 else if (this.currentTool === 'draw') {
+                    if (!this.ensureTrackTagsSelected()) {
+                        return;
+                    }
                     const n = new TrackNode(world.x, world.y);
                     if (this.selectedIndices.size === 1) {
                         const idx = Array.from(this.selectedIndices)[0];
-                        // Check length limit before adding
-                        if (this.getTrackLengthKM() > 30) {
-                            alert("Maximum circuit length (30KM) reached. Cannot add more nodes.");
+                        if (!this.canAddMoreTrackLength()) {
                             return;
                         }
                         if (idx < this.nodes.length - 1) {
@@ -324,8 +620,7 @@ class App {
                         }
                     }
                     else {
-                        if (this.getTrackLengthKM() > 30) {
-                            alert("Maximum circuit length (30KM) reached. Cannot add more nodes.");
+                        if (!this.canAddMoreTrackLength()) {
                             return;
                         }
                         this.nodes.push(n);
@@ -494,6 +789,10 @@ class App {
             this.queueAutoSave();
         });
         document.getElementById('toggle-close-btn').addEventListener('click', (e) => {
+            if (!this.ensureTrackTagsSelected())
+                return;
+            if (!this.currentSelectionAllowsClosedCircuit())
+                return;
             this.isClosedTrack = !this.isClosedTrack;
             const btn = e.currentTarget;
             btn.classList.toggle('toggle-closed', this.isClosedTrack);
@@ -599,7 +898,7 @@ class App {
                 this.queueAutoSave();
             }
         };
-        document.getElementById('clear-btn').onclick = () => { this.nodes = []; this.pitNodes = []; this.selectedIndices.clear(); this.isClosedTrack = false; document.getElementById('toggle-close-btn').classList.remove('toggle-closed'); this.updateUI(); this.draw(); this.queueAutoSave(); };
+        document.getElementById('clear-btn').onclick = () => { this.nodes = []; this.pitNodes = []; this.selectedIndices.clear(); this.isClosedTrack = false; document.getElementById('toggle-close-btn').classList.remove('toggle-closed'); this.updateCloseCircuitAvailability(); this.updateUI(); this.draw(); this.queueAutoSave(); };
         // Export Image
         document.getElementById('export-img-btn').onclick = () => this.exportImage();
         // Import JSON
@@ -624,6 +923,12 @@ class App {
                         }
                         else if (data.nodes && Array.isArray(data.nodes)) {
                             nodesData = data.nodes;
+                            if (Array.isArray(data.selectedTrackTags)) {
+                                this.selectedTrackTags = this.normalizeTrackTags(data.selectedTrackTags);
+                            }
+                            if (data.selectedRallyFormat) {
+                                this.selectedRallyFormat = data.selectedRallyFormat;
+                            }
                             if (Array.isArray(data.pitNodes)) {
                                 this.pitNodes = data.pitNodes.map((p) => ({ x: p.x, y: p.y }));
                             }
@@ -662,6 +967,12 @@ class App {
                             node.turnNumber = n.turnNumber || 0;
                             return node;
                         });
+                        if (this.selectedTrackTags.length === 0 && this.membershipAccess.tags.length === 1) {
+                            this.selectedTrackTags = [...this.membershipAccess.tags];
+                        }
+                        this.syncTrackClosureFromSelection();
+                        this.renderTrackTagSelector();
+                        this.renderSelectedTrackTags();
                         this.draw();
                         this.queueAutoSave();
                     }
@@ -694,6 +1005,8 @@ class App {
             const exportData = {
                 nodes: this.nodes,
                 pitNodes: this.pitNodes,
+                selectedTrackTags: this.selectedTrackTags,
+                selectedRallyFormat: this.selectedRallyFormat,
                 bgImage: bgImageDataUrl,
                 bgScale: this.bgScale,
                 bgOpacity: this.bgOpacity
@@ -907,8 +1220,8 @@ class App {
             this.nodes.push(new TrackNode(p.x * invScale, p.y * invScale));
         }
         this.isClosedTrack = true;
-        const btn = document.getElementById('toggle-close-btn');
-        btn.classList.add('toggle-closed');
+        this.syncTrackClosureFromSelection();
+        this.updateCloseCircuitAvailability();
         setProgress(100, 'ENGINEERING COMPLETE!');
         await new Promise(r => setTimeout(r, 600));
         overlay.classList.add('hidden');
@@ -1335,15 +1648,29 @@ class App {
 
         const lengthEl = document.getElementById('track-length');
         const limitWarning = document.getElementById('length-limit-warning');
-        
-        lengthEl.innerText = `${totalUnits.toFixed(2)} ${this.scaleUnit.toUpperCase()}`;
+        const lengthRule = this.getActiveLengthRule();
+        const isBelowMin = this.selectedTrackTags.length > 0 && distKM > 0 && distKM < lengthRule.min;
+        const isAboveMax = distKM > lengthRule.max;
 
-        if (distKM > 30) {
+        lengthEl.innerText = `${totalUnits.toFixed(2)} ${this.scaleUnit.toUpperCase()}`;
+        lengthEl.title = this.getLengthLimitMessage();
+
+        if (isAboveMax) {
             lengthEl.classList.add('text-red-500');
-            lengthEl.classList.remove('text-white');
-            if (limitWarning) limitWarning.classList.remove('hidden');
+            lengthEl.classList.remove('text-white', 'text-amber-400');
+            if (limitWarning) {
+                limitWarning.textContent = `Too long. ${this.getLengthLimitMessage()}`;
+                limitWarning.classList.remove('hidden');
+            }
+        } else if (isBelowMin) {
+            lengthEl.classList.add('text-amber-400');
+            lengthEl.classList.remove('text-white', 'text-red-500');
+            if (limitWarning) {
+                limitWarning.textContent = `Too short. ${this.getLengthLimitMessage()}`;
+                limitWarning.classList.remove('hidden');
+            }
         } else {
-            lengthEl.classList.remove('text-red-500');
+            lengthEl.classList.remove('text-red-500', 'text-amber-400');
             lengthEl.classList.add('text-white');
             if (limitWarning) limitWarning.classList.add('hidden');
         }
@@ -1382,21 +1709,20 @@ class App {
     createNewProject() {
         const id = this.generateId();
         this.currentProjectId = id;
-        this.nodes = [
-            new TrackNode(300, 300),
-            new TrackNode(600, 200),
-            new TrackNode(900, 400),
-            new TrackNode(700, 600)
-        ];
+        this.nodes = [];
         this.pitNodes = [];
         this.isClosedTrack = false;
+        this.selectedTrackTags = this.membershipAccess.tags.length === 1 ? [...this.membershipAccess.tags] : [];
+        this.selectedRallyFormat = 'normal';
         this.bgImage = null;
         this.selectedIndices.clear();
         this.hasUnsavedChanges = false; // Start clean
         const nameInput = document.getElementById('project-name-input');
-        nameInput.value = 'New Circuit';
-        const closeBtn = document.getElementById('toggle-close-btn');
-        closeBtn.classList.remove('toggle-closed');
+        nameInput.value = 'New Track';
+        this.updateCloseCircuitAvailability();
+        this.renderTrackTagSelector();
+        this.renderSelectedTrackTags();
+        this.hasUnsavedChanges = true;
         this.saveProject();
         // Update URL so refresh/deep-link works and bridge can identify project
         window.history.replaceState({}, '', `?id=${id}`);
@@ -1421,12 +1747,14 @@ class App {
         this.selectedIndices.clear();
         this.bgImage = null;
         this.isClosedTrack = !!proj.data.isClosedTrack;
+        this.selectedTrackTags = this.normalizeTrackTags(proj.data.selectedTrackTags || []);
+        this.selectedRallyFormat = proj.data.selectedRallyFormat || 'normal';
+        if (this.selectedTrackTags.length === 0 && this.membershipAccess.tags.length === 1) {
+            this.selectedTrackTags = [...this.membershipAccess.tags];
+        }
         this.hasUnsavedChanges = false; // Reset on load
-        const closeBtn = document.getElementById('toggle-close-btn');
-        if (this.isClosedTrack)
-            closeBtn.classList.add('toggle-closed');
-        else
-            closeBtn.classList.remove('toggle-closed');
+        this.syncTrackClosureFromSelection();
+        this.updateCloseCircuitAvailability();
         if (proj.data.nodes && Array.isArray(proj.data.nodes)) {
             this.nodes = proj.data.nodes.map((n) => {
                 const node = new TrackNode(n.x, n.y);
@@ -1471,7 +1799,8 @@ class App {
             document.getElementById('bg-opacity').value = (this.bgOpacity * 100).toString();
             document.getElementById('bg-opacity-val').innerText = `${Math.round(this.bgOpacity * 100)}%`;
         }
-        document.getElementById('bg-trace-panel').classList.toggle('hidden', !this.bgImage);
+        this.renderTrackTagSelector();
+        this.renderSelectedTrackTags();
         this.updateUI();
         this.draw();
     }
@@ -1517,6 +1846,8 @@ class App {
             nodes: this.nodes,
             pitNodes: this.pitNodes,
             isClosedTrack: this.isClosedTrack,
+            selectedTrackTags: this.selectedTrackTags,
+            selectedRallyFormat: this.selectedRallyFormat,
             scaleUnit: this.scaleUnit,
             pxPerUnit: this.pxPerUnit,
             bgImage: bgImageDataUrl,
@@ -1591,29 +1922,39 @@ class App {
         this.renderProjectsList();
     }
     updateAITrackSuggestion(distance, unit, numCorners) {
-        const el = document.getElementById('ai-track-type');
-        if (distance === 0 || this.nodes.length < 3) {
-            el.innerText = 'EVALUATING...';
-            return;
-        }
-        // AI Classification Logic
-        let prediction = 'UNKNOWN CLASSIFICATION';
         let distKM = distance;
         if (unit === 'm')
             distKM = distance / 1000;
         if (unit === 'cm')
             distKM = distance / 100000;
-        if (distKM < 1.0)
-            prediction = 'KARTING CIRCUIT';
-        else if (distKM >= 1.0 && distKM <= 3.0)
-            prediction = numCorners > 15 ? 'FORMULA E (STREET)' : 'CLUB CIRCUIT';
-        else if (distKM > 3.0 && distKM <= 7.0)
-            prediction = 'F1 GRADE 1';
-        else if (distKM > 7.0)
-            prediction = 'LMP / WEC HYPERCAR';
-        el.innerText = `AI DETECTS: ${prediction}`;
-        // Also update the AI suggestions panel
+        if (!this.hasPremiumAccess()) {
+            const el = document.getElementById('selected-track-tags');
+            if (el) {
+                el.innerText = this.getImperfectAIDetectionLabel(distKM, numCorners);
+            }
+        } else {
+            this.renderSelectedTrackTags();
+        }
         this.updateAISuggestions(distKM, numCorners);
+    }
+    getImperfectAIDetectionLabel(distKM, numCorners) {
+        if (distKM === 0 || this.nodes.length < 3) {
+            return 'AI DETECTS: EVALUATING...';
+        }
+        const classes = ['KARTING CIRCUIT', 'CLUB CIRCUIT', 'F1 GRADE 1', 'LMP / WEC HYPERCAR'];
+        let index = 0;
+        if (distKM < 1.0)
+            index = 0;
+        else if (distKM <= 3.0)
+            index = 1;
+        else if (distKM <= 7.0)
+            index = 2;
+        else
+            index = 3;
+        // Free-mode detection is intentionally imperfect instead of always exact.
+        const drift = (this.nodes.length + numCorners) % 4 === 0 ? 1 : ((this.nodes.length + numCorners) % 7 === 0 ? -1 : 0);
+        const finalIndex = Math.max(0, Math.min(classes.length - 1, index + drift));
+        return `AI DETECTS: ${classes[finalIndex]}`;
     }
     updateAISuggestions(distKM, numCorners) {
         const listEl = document.getElementById('ai-suggestions-list');
@@ -1732,12 +2073,16 @@ class App {
             })),
             pitNodes: this.pitNodes.map(p => ({ x: p.x, y: p.y })),
             isClosedTrack: this.isClosedTrack,
+            selectedTrackTags: [...this.selectedTrackTags],
+            selectedRallyFormat: this.selectedRallyFormat,
             scaleUnit: this.scaleUnit,
             pxPerUnit: this.pxPerUnit
         };
     }
     applyHistorySnapshot(snapshot) {
         this.isClosedTrack = !!snapshot.isClosedTrack;
+        this.selectedTrackTags = this.normalizeTrackTags(snapshot.selectedTrackTags || []);
+        this.selectedRallyFormat = snapshot.selectedRallyFormat || 'normal';
         this.nodes = snapshot.nodes.map(n => {
             const node = new TrackNode(n.x, n.y);
             node.sharpness = n.sharpness || 0;
@@ -1754,10 +2099,8 @@ class App {
         this.pxPerUnit = snapshot.pxPerUnit;
 
         // Update UI elements to match the snapshot state
-        const closeBtn = document.getElementById('toggle-close-btn');
-        if (closeBtn) {
-            closeBtn.classList.toggle('toggle-closed', this.isClosedTrack);
-        }
+        this.syncTrackClosureFromSelection();
+        this.updateCloseCircuitAvailability();
         const scaleUnitEl = document.getElementById('scale-unit');
         if (scaleUnitEl) scaleUnitEl.value = this.scaleUnit;
         const pxUnitEl = document.getElementById('px-unit');
@@ -1766,6 +2109,8 @@ class App {
             const pxValEl = document.getElementById('px-unit-val');
             if (pxValEl) pxValEl.innerText = `${Math.round(this.pxPerUnit)} px`;
         }
+        this.renderTrackTagSelector();
+        this.renderSelectedTrackTags();
 
         this.selectedIndices.clear();
         this.draw();

@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Architect — Premium Membership</title>
+    <meta name="description" content="Unlock the full power of Apex Architect with premium membership. Design F1, Rally, GT, and more.">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --red: #e10600;
+            --red-bright: #ff1e00;
+            --bg: #030407;
+            --surface: #06080d;
+            --surface2: #0b0f19;
+            --border: rgba(255, 255, 255, 0.04);
+            --text: #e2e8f0;
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --gold: #f59e0b;
+            --gold-glow: rgba(245, 158, 11, 0.3);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(225, 6, 0, 0.06), transparent 35%),
+                radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.06), transparent 35%),
+                radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.04), transparent 40%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .f1-font { font-family: 'Orbitron', sans-serif; }
+
+        /* ── Top Nav ── */
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(20px);
+            background: rgba(3, 4, 7, 0.8);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-flag {
+            width: 32px;
+            height: 32px;
+            background: var(--red);
+            border-radius: 4px;
+            transform: skewX(-10deg);
+            box-shadow: 0 0 20px rgba(225, 6, 0, 0.4);
+        }
+
+        .nav-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            font-style: italic;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .nav-link.active {
+            color: var(--red);
+            background: rgba(225, 6, 0, 0.1);
+            border-color: rgba(225, 6, 0, 0.3);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            text-align: center;
+            padding: 80px 24px 40px;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.08), transparent 60%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 100px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 28px;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--gold);
+            box-shadow: 0 0 8px var(--gold);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(36px, 5vw, 64px);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            font-style: italic;
+            color: white;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 .accent { color: var(--gold); }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 16px;
+            max-width: 560px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* ── Current Plan Banner ── */
+        .current-plan-banner {
+            max-width: 600px;
+            margin: 30px auto 0;
+            padding: 14px 24px;
+            border-radius: 12px;
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #4ade80;
+        }
+
+        .current-plan-banner.show { display: flex; }
+
+        .current-plan-banner .tier-name {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ── Pricing Grid ── */
+        .pricing-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .pricing-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+        }
+
+        /* ── Card ── */
+        .plan-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 36px 28px 32px;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .plan-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            transition: background 0.4s;
+        }
+
+        .plan-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateY(-8px);
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Featured card */
+        .plan-card.featured {
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.03);
+            transform: scale(1.04);
+        }
+
+        .plan-card.featured::before {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.4) 0%, transparent 40%, rgba(245, 158, 11, 0.2) 100%);
+        }
+
+        .plan-card.featured:hover {
+            transform: scale(1.04) translateY(-8px);
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5), 0 0 40px rgba(245, 158, 11, 0.15);
+        }
+
+        .best-value-badge {
+            position: absolute;
+            top: -1px;
+            right: 24px;
+            padding: 6px 16px 8px;
+            background: linear-gradient(135deg, var(--gold), #d97706);
+            border-radius: 0 0 10px 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #030407;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+        }
+
+        .plan-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .plan-icon.circuit {
+            background: rgba(225, 6, 0, 0.1);
+            border: 1px solid rgba(225, 6, 0, 0.2);
+            box-shadow: 0 0 20px rgba(225, 6, 0, 0.1);
+        }
+
+        .plan-icon.rally {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+        }
+
+        .plan-icon.ultimate {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
+        }
+
+        .plan-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .plan-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .plan-price .currency {
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .plan-price .amount {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 42px;
+            font-weight: 900;
+            color: white;
+            line-height: 1;
+        }
+
+        .plan-price .period {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Features */
+        .plan-features { list-style: none; margin-bottom: 28px; }
+
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.5;
+        }
+
+        .plan-features li .check {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        .check.circuit-check { background: rgba(225, 6, 0, 0.15); color: #ff6b6b; }
+        .check.rally-check { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+        .check.ultimate-check { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+
+        .plan-features li .spec {
+            display: block;
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        /* CTA Button */
+        .plan-cta {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-style: italic;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-cta::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .plan-cta:hover::after { transform: translateX(100%); }
+
+        .plan-cta.circuit-cta {
+            background: linear-gradient(135deg, var(--red), #ff4d4d);
+            color: white;
+            box-shadow: 0 4px 20px rgba(225, 6, 0, 0.3);
+        }
+
+        .plan-cta.circuit-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(225, 6, 0, 0.5);
+        }
+
+        .plan-cta.rally-cta {
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            color: white;
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .plan-cta.rally-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(34, 197, 94, 0.5);
+        }
+
+        .plan-cta.ultimate-cta {
+            background: linear-gradient(135deg, #d97706, var(--gold));
+            color: #030407;
+            box-shadow: 0 4px 20px var(--gold-glow);
+        }
+
+        .plan-cta.ultimate-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(245, 158, 11, 0.6);
+        }
+
+        .plan-cta.active-plan {
+            background: rgba(34, 197, 94, 0.15) !important;
+            color: #4ade80 !important;
+            border: 1px solid rgba(34, 197, 94, 0.3) !important;
+            box-shadow: none !important;
+            cursor: default;
+        }
+
+        .plan-cta.active-plan:hover { transform: none; }
+
+        /* ── Specs Section ── */
+        .specs-section {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+
+        .specs-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .specs-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .specs-header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .specs-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.01);
+        }
+
+        .specs-table th {
+            padding: 14px 20px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.03);
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .specs-table td {
+            padding: 12px 20px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .specs-table tr:last-child td { border-bottom: none; }
+
+        .specs-table .tag-cell {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .specs-table .tag-cell.circuit-tag { color: #ff6b6b; }
+        .specs-table .tag-cell.rally-tag { color: #4ade80; }
+
+        /* ── Footer ── */
+        .page-footer {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 10px;
+            color: rgba(255,255,255,0.2);
+            letter-spacing: 3px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* ── Confirmation Modal ── */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-overlay.show { display: flex; }
+
+        .confirm-box {
+            background: linear-gradient(145deg, #0f172a, #0b0e14);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            width: min(440px, 92vw);
+            padding: 36px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            text-align: center;
+        }
+
+        .confirm-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .confirm-box p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .confirm-box .tier-highlight {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .confirm-actions button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-muted);
+        }
+
+        .btn-cancel:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, var(--gold), #d97706);
+            border: none;
+            color: #030407;
+            box-shadow: 0 4px 16px var(--gold-glow);
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.5);
+        }
+
+        /* Success state */
+        .success-msg {
+            display: none;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #4ade80;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .success-msg.show { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0b0e14; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <a href="index.html" class="nav-logo">
+            <div class="nav-flag"></div>
+            <div class="nav-title">Apex Architect</div>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="premium.html" class="nav-link active">Premium</a>
+            <a href="tutorial.html" class="nav-link">Tutorial</a>
+            <button id="auth-btn" class="nav-link" style="background:none;cursor:pointer;">Log Out</button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            Premium Membership
+        </div>
+        <h1>Unlock Every<br><span class="accent">Racing Discipline</span></h1>
+        <p>Choose a circuit bundle, choose a rally bundle, or take the best-value all-access plan that combines every track family in one membership.</p>
+
+        <div id="current-plan-banner" class="current-plan-banner">
+            ✅ Your active plan: <span id="current-tier-name" class="tier-name">—</span>
+            <button id="cancel-plan-btn" style="background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);padding:4px 12px;border-radius:6px;font-size:10px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;font-weight:700;">Cancel</button>
+        </div>
+    </section>
+
+    <!-- Pricing Cards -->
+    <section class="pricing-section">
+        <div class="pricing-grid">
+
+            <!-- Circuit Racing -->
+            <div class="plan-card" id="card-circuit">
+                <div class="plan-icon circuit">🏎️</div>
+                <div class="plan-name">Circuit / Formula Pro</div>
+                <div class="plan-subtitle">F1, F2, F3, go-karting, GT, hypercar, and LMP in one bundle</div>
+                <div class="plan-price">
+                    <span class="currency">$</span>
+                    <span class="amount">14</span>
+                    <span class="period">.99 / month</span>
+                </div>
+                <ul class="plan-features">
+                    <li>
+                        <span class="check circuit-check">✓</span>
+                        <div>F1 / F2 / F3 Circuits<span class="spec">3 km – 7 km closed track</span></div>
+                    </li>
+                    <li>
+                        <span class="check circuit-check">✓</span>
+                        <div>Go-Karting Tracks<span class="spec">300 m – 5 km closed track</span></div>
+                    </li>
+                    <li>
+                        <span class="check circuit-check">✓</span>
+                        <div>GT Racing Circuits<span class="spec">3 km – 7 km closed track</span></div>
+                    </li>
+                    <li>
+                        <span class="check circuit-check">✓</span>
+                        <div>Hypercar Circuits<span class="spec">3 km – 7 km closed track</span></div>
+                    </li>
+                    <li>
+                        <span class="check circuit-check">✓</span>
+                        <div>LMP / Le Mans Circuits<span class="spec">3 km – 7 km closed track</span></div>
+                    </li>
+                </ul>
+                <button class="plan-cta circuit-cta" data-tier="circuit" onclick="selectPlan('circuit')">Subscribe Now</button>
+            </div>
+
+            <!-- All Access (Featured) -->
+            <div class="plan-card featured" id="card-all_access">
+                <div class="best-value-badge">★ Best Value</div>
+                <div class="plan-icon ultimate">🏆</div>
+                <div class="plan-name">Ultimate</div>
+                <div class="plan-subtitle">The best deal across both bundles</div>
+                <div class="plan-price">
+                    <span class="currency">$</span>
+                    <span class="amount">19</span>
+                    <span class="period">.99 / month</span>
+                </div>
+                <ul class="plan-features">
+                    <li>
+                        <span class="check ultimate-check">✓</span>
+                        <div>All Circuit Racing Types<span class="spec">F1, F2, F3, Go-Kart, GT, Hypercar, LMP</span></div>
+                    </li>
+                    <li>
+                        <span class="check ultimate-check">✓</span>
+                        <div>All Rally Racing Types<span class="spec">Normal special sections, stage rally, and raid rally</span></div>
+                    </li>
+                    <li>
+                        <span class="check ultimate-check">✓</span>
+                        <div>Unlimited Track Length<span class="spec">Up to 8,000 km for Raid Rally</span></div>
+                    </li>
+                    <li>
+                        <span class="check ultimate-check">✓</span>
+                        <div>Priority Feature Access<span class="spec">Early access to new tools & templates</span></div>
+                    </li>
+                    <li>
+                        <span class="check ultimate-check">✓</span>
+                        <div>Best Deal Across Every Class<span class="spec">$27.98 → $19.99 combined</span></div>
+                    </li>
+                </ul>
+                <button class="plan-cta ultimate-cta" data-tier="all_access" onclick="selectPlan('all_access')">Get Ultimate Access</button>
+            </div>
+
+            <!-- Rally Racing -->
+            <div class="plan-card" id="card-rally">
+                <div class="plan-icon rally">🏔️</div>
+                <div class="plan-name">Rally Pro</div>
+                <div class="plan-subtitle">Every rally format in one bundle</div>
+                <div class="plan-price">
+                    <span class="currency">$</span>
+                    <span class="amount">12</span>
+                    <span class="period">.99 / month</span>
+                </div>
+                <ul class="plan-features">
+                    <li>
+                        <span class="check rally-check">✓</span>
+                        <div>Normal Rally Special Sections<span class="spec">1 km – 2 km closed track</span></div>
+                    </li>
+                    <li>
+                        <span class="check rally-check">✓</span>
+                        <div>Stage Rally Sections<span class="spec">3 km – 50 km per section (open), 300–350 km total</span></div>
+                    </li>
+                    <li>
+                        <span class="check rally-check">✓</span>
+                        <div>Raid Rally Sectors<span class="spec">100 km – 800 km per sector (open), 3,000–8,000 km total</span></div>
+                    </li>
+                    <li>
+                        <span class="check rally-check">✓</span>
+                        <div>Open Track Support<span class="spec">Stage & Raid rallies use non-closed tracks</span></div>
+                    </li>
+                </ul>
+                <button class="plan-cta rally-cta" data-tier="rally" onclick="selectPlan('rally')">Subscribe Now</button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Track Length Specs Table -->
+    <section class="specs-section">
+        <div class="specs-header">
+            <h2>Track Specifications</h2>
+            <p>Detailed length and configuration requirements for each racing discipline</p>
+        </div>
+        <table class="specs-table">
+            <thead>
+                <tr>
+                    <th>Discipline</th>
+                    <th>Section Length</th>
+                    <th>Total Length</th>
+                    <th>Track Type</th>
+                    <th>Tier</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="tag-cell circuit-tag">F1 / F2 / F3</td>
+                    <td>3 km – 7 km</td>
+                    <td>3 km – 7 km</td>
+                    <td>Closed Circuit</td>
+                    <td>Circuit / Formula Pro</td>
+                </tr>
+                <tr>
+                    <td class="tag-cell circuit-tag">Go-Karting</td>
+                    <td>300 m – 5 km</td>
+                    <td>300 m – 5 km</td>
+                    <td>Closed Circuit</td>
+                    <td>Circuit / Formula Pro</td>
+                </tr>
+                <tr>
+                    <td class="tag-cell circuit-tag">GT Racing</td>
+                    <td>3 km – 7 km</td>
+                    <td>3 km – 7 km</td>
+                    <td>Closed Circuit</td>
+                    <td>Circuit / Formula Pro</td>
+                </tr>
+                <tr>
+                    <td class="tag-cell circuit-tag">Hypercar / Le Mans</td>
+                    <td>3 km – 7 km</td>
+                    <td>3 km – 7 km</td>
+                    <td>Closed Circuit</td>
+                    <td>Circuit / Formula Pro</td>
+                </tr>
+                <tr>
+                    <td class="tag-cell circuit-tag">LMP Endurance</td>
+                    <td>3 km – 7 km</td>
+                    <td>3 km – 7 km</td>
+                    <td>Closed Circuit</td>
+                    <td>Circuit / Formula Pro</td>
+                </tr>
+                <tr>
+                    <td class="tag-cell rally-tag">Rally Normal SS</td>
+                    <td>1 km – 2 km</td>
+                    <td>1 km – 2 km</td>
+                    <td>Closed Track</td>
+                    <td>Rally Pro</td>
+                </tr>
+                <tr>
+                    <td class="tag-cell rally-tag">Rally Stage</td>
+                    <td>3 km – 50 km</td>
+                    <td>300 km – 350 km</td>
+                    <td>Open Track</td>
+                    <td>Rally Pro</td>
+                </tr>
+                <tr>
+                    <td class="tag-cell rally-tag">Rally Raid</td>
+                    <td>100 km – 800 km</td>
+                    <td>3,000 km – 8,000 km</td>
+                    <td>Open Track</td>
+                    <td>Rally Pro</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Confirmation Modal -->
+    <div class="confirm-overlay" id="confirm-overlay">
+        <div class="confirm-box">
+            <h3 id="confirm-title">Confirm Subscription</h3>
+            <p id="confirm-text">You are about to activate <span class="tier-highlight" id="confirm-tier">—</span>. This will unlock all associated track types and design tools.</p>
+            <div class="confirm-actions">
+                <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+                <button class="btn-confirm" id="confirm-btn" onclick="confirmPurchase()">Activate Now</button>
+            </div>
+            <div class="success-msg" id="success-msg">
+                🎉 Membership activated! Redirecting to your dashboard...
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        APEX ARCHITECT DESIGN SYSTEMS &copy; 2026
+    </footer>
+
+    <script src="supabase-client.js"></script>
+    <script>
+        let pendingTier = null;
+
+        // ── Auth Guard ──
+        (async () => {
+            const { data: { session } } = await window.supabase.auth.getSession();
+            if (!session) { window.location.replace('login.html'); return; }
+
+            // ── Update Redirect ─────────────────────────────────────────
+            ApexUpdate.redirect();
+
+            // Show user state
+            const authBtn = document.getElementById('auth-btn');
+            authBtn.textContent = 'Log Out';
+            authBtn.onclick = async () => {
+                await ApexAuth.signOut();
+                window.location.replace('login.html');
+            };
+
+            // Check current membership
+            await refreshPlanState();
+        })();
+
+        async function refreshPlanState() {
+            const membership = await ApexMembership.getMembership();
+            const banner = document.getElementById('current-plan-banner');
+            const tierName = document.getElementById('current-tier-name');
+            const cancelBtn = document.getElementById('cancel-plan-btn');
+
+            // Reset all CTAs
+            document.querySelectorAll('.plan-cta').forEach(btn => {
+                btn.classList.remove('active-plan');
+                btn.disabled = false;
+                const tier = btn.dataset.tier;
+                if (tier === 'circuit') { btn.textContent = 'Subscribe Now'; }
+                else if (tier === 'rally') { btn.textContent = 'Subscribe Now'; }
+                else if (tier === 'all_access') { btn.textContent = 'Get Ultimate Access'; }
+            });
+
+            if (membership) {
+                const tierDef = ApexMembership.TIERS[membership.tier];
+                banner.classList.add('show');
+                tierName.textContent = tierDef ? tierDef.name : membership.tier;
+                if (membership.isTestUser) {
+                    tierName.textContent += ' (Test)';
+                }
+                cancelBtn.style.display = membership.isTestUser ? 'none' : 'inline-block';
+
+                // Mark active plan button
+                const activeBtn = document.querySelector(`.plan-cta[data-tier="${membership.tier}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active-plan');
+                    activeBtn.textContent = '✓ Active Plan';
+                    activeBtn.disabled = true;
+                }
+            } else {
+                banner.classList.remove('show');
+                cancelBtn.style.display = 'inline-block';
+            }
+        }
+
+        function selectPlan(tier) {
+            const btn = document.querySelector(`.plan-cta[data-tier="${tier}"]`);
+            if (btn && btn.classList.contains('active-plan')) return;
+
+            pendingTier = tier;
+            const tierNames = { circuit: 'Apex Circuit & Formula Pro', rally: 'Apex Rally Pro', all_access: 'Apex Ultimate' };
+            document.getElementById('confirm-tier').textContent = tierNames[tier] || tier;
+            document.getElementById('confirm-overlay').classList.add('show');
+            document.getElementById('success-msg').classList.remove('show');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirm-overlay').classList.remove('show');
+            pendingTier = null;
+        }
+
+        async function confirmPurchase() {
+            if (!pendingTier) return;
+            const btn = document.getElementById('confirm-btn');
+            btn.textContent = 'Activating...';
+            btn.disabled = true;
+
+            const result = await ApexMembership.setMembership(pendingTier);
+
+            if (result.ok) {
+                document.getElementById('success-msg').classList.add('show');
+                btn.style.display = 'none';
+                document.querySelector('.btn-cancel').style.display = 'none';
+
+                // Refresh state and redirect
+                await refreshPlanState();
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            } else {
+                btn.textContent = 'Activate Now';
+                btn.disabled = false;
+                alert('Failed to activate: ' + (result.error || 'Unknown error'));
+            }
+        }
+
+        document.getElementById('cancel-plan-btn').addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to cancel your premium membership?')) return;
+            await ApexMembership.cancelMembership();
+            await refreshPlanState();
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('confirm-overlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeConfirm();
+        });
+    </script>
+
+</body>
+</html>

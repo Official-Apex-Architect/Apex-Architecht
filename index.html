@@ -153,6 +153,10 @@
     <header class="relative h-[45vh] flex items-end px-12 pb-12 overflow-hidden hero-gradient border-b border-white/5">
         <!-- Auth Navbar -->
         <div class="absolute top-0 right-0 p-8 z-20 flex items-center gap-4">
+            <a href="premium.html"
+                class="glass-card px-6 py-2.5 rounded-md text-[11px] text-[#fbbf24] tracking-[0.2em] uppercase font-bold hover:text-white hover:bg-white/5 transition-colors border border-[#fbbf24]/20 hover:border-[#fbbf24]/50">
+                Premium
+            </a>
             <a href="tutorial.html" target="_blank"
                 class="glass-card px-6 py-2.5 rounded-md text-[11px] text-white/70 tracking-[0.2em] uppercase font-bold hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-white/20">
                 Tutorial
@@ -249,25 +253,8 @@
                 return;
             }
 
-            // 🚨 NEW: check email verification
-            if (!user.email_confirmed_at) {
-                document.body.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;font-family:sans-serif;background:#030407;color:white;">
-            <h1 style="font-size:24px;margin-bottom:10px;">Verify Your Email</h1>
-            <p style="opacity:0.7;margin-bottom:20px;">Check your inbox and click the verification link.</p>
-            
-            <div style="display:flex;gap:12px;">
-                <button onclick="resendVerification()" style="padding:10px 20px;background:#e10600;border:none;color:white;cursor:pointer;border-radius:4px;font-weight:bold;">
-                    Resend Email
-                </button>
-                <button onclick="signOutVerification()" style="padding:10px 20px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:white;cursor:pointer;border-radius:4px;font-weight:bold;">
-                    Sign Out
-                </button>
-            </div>
-        </div>
-    `;
-                return;
-            }
+            // ── Update Redirect ───────────────────────────────────────────
+            ApexUpdate.redirect();
 
             const currentAccountName = window.ApexNativeBridge?.accountName?.() || '';
             const currentUser = {
@@ -371,41 +358,6 @@
             }
         })();
     </script>
-    <script>
-        function signup() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    user.sendEmailVerification();
-                    alert("Verification email sent!");
-                });
-        }
-        async function resendVerification() {
-            const { data: { user } } = await window.supabase.auth.getUser();
-
-            if (!user) return;
-
-            const { error } = await window.supabase.auth.resend({
-                type: 'signup',
-                email: user.email
-            });
-
-            if (!error) {
-                alert("Verification email sent again!");
-            } else {
-                alert("Error sending email.");
-                console.error(error);
-            }
-        }
-        async function signOutVerification() {
-            await ApexAuth.signOut();
-            window.location.replace('login.html');
-        }
-    </script>
-
 </body>
 
-</html>
+</html

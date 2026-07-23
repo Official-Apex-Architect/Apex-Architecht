@@ -1,0 +1,12 @@
+{
+  "name": "webbundle",
+  "version": "1.0.0",
+  "description": "Apex Architect web bundle",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

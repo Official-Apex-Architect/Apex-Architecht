@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Architect — Track Racer</title>
+    <script>
+        if (!localStorage.getItem('apex_sb_session')) {
+            window.location.replace('login.html');
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 30%, #11161f 0%, #070a10 100%);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #race-canvas {
+            position: fixed;
+            inset: 0;
+            display: block;
+        }
+
+        .f1-font { font-family: 'Orbitron', sans-serif; }
+
+        /* HUD */
+        .hud {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #hud-top {
+            top: 18px;
+            left: 18px;
+            right: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .hud-card {
+            background: rgba(10, 14, 20, 0.72);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+
+        #hud-track-name {
+            font-size: 14px;
+            letter-spacing: 0.18em;
+            font-weight: 700;
+        }
+
+        #hud-class {
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            margin-top: 4px;
+            font-weight: 700;
+        }
+
+        .hud-stat-label {
+            font-size: 9px;
+            letter-spacing: 0.24em;
+            color: rgba(255, 255, 255, 0.45);
+            text-transform: uppercase;
+        }
+
+        #hud-speed {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        #hud-lap {
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 2px;
+            font-weight: 700;
+        }
+
+        #back-btn {
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #e2e8f0;
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-weight: 700;
+            background: rgba(225, 6, 0, 0.16);
+            border: 1px solid rgba(225, 6, 0, 0.4);
+            padding: 10px 16px;
+            border-radius: 10px;
+            transition: background 0.2s;
+        }
+
+        #back-btn:hover { background: rgba(225, 6, 0, 0.32); }
+
+        #race-error {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            text-align: center;
+            padding: 24px;
+            background: rgba(7, 10, 16, 0.92);
+        }
+
+        #race-error h1 {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 0.14em;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        #race-error a {
+            pointer-events: auto;
+            color: #fff;
+            text-decoration: none;
+            background: #e10600;
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        #hud-meta {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 6px;
+        }
+
+        #hud-meta span strong {
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Tuning Dock */
+        #tuning-dock {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tuning-panel {
+            background: rgba(10, 14, 20, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            padding: 14px 18px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .tuning-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tuning-label {
+            font-size: 9px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tuning-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tuning-input {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-family: 'Orbitron', sans-serif;
+            width: 70px;
+            text-align: center;
+            outline: none;
+        }
+
+        .tuning-input:focus {
+            border-color: #e10600;
+        }
+
+        .tuning-slider {
+            accent-color: #22d3ee;
+            width: 110px;
+            cursor: pointer;
+        }
+
+        /* Universal Button Animations & Micro-interactions */
+        button, a, .tuning-btn, .tuning-toggle-btn {
+            transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+            user-select: none;
+        }
+
+        button:hover, a:hover, .tuning-btn:hover, .tuning-toggle-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active, a:active, .tuning-btn:active, .tuning-toggle-btn:active {
+            transform: translateY(1px) scale(0.97) !important;
+        }
+
+        #back-btn {
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #e2e8f0;
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            font-weight: 700;
+            background: linear-gradient(135deg, rgba(225, 6, 0, 0.25), rgba(225, 6, 0, 0.1));
+            border: 1px solid rgba(225, 6, 0, 0.5);
+            padding: 10px 18px;
+            border-radius: 10px;
+            box-shadow: 0 4px 14px rgba(225, 6, 0, 0.25);
+        }
+
+        #back-btn:hover {
+            background: linear-gradient(135deg, rgba(225, 6, 0, 0.45), rgba(225, 6, 0, 0.25));
+            border-color: rgba(225, 6, 0, 0.85);
+            color: #ffffff;
+            box-shadow: 0 6px 20px rgba(225, 6, 0, 0.45);
+        }
+
+        .tuning-btn {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(59, 130, 246, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            color: #93c5fd;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .tuning-btn:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(59, 130, 246, 0.3));
+            border-color: rgba(59, 130, 246, 0.85);
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .tuning-toggle-btn {
+            background: rgba(10, 14, 20, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 9px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .tuning-toggle-btn:hover {
+            color: #fff;
+            border-color: rgba(34, 211, 238, 0.6);
+            background: rgba(15, 23, 42, 0.95);
+            box-shadow: 0 6px 20px rgba(34, 211, 238, 0.25);
+        }
+
+        .min-warning {
+            font-size: 8px;
+            color: #fbbf24;
+            display: none;
+        }
+
+        .min-warning.show {
+            display: block;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+
+<body>
+    <canvas id="race-canvas"></canvas>
+
+    <div id="hud-top" class="hud">
+        <div class="hud-card">
+            <div id="hud-track-name" class="f1-font">CIRCUIT</div>
+            <div id="hud-class" class="f1-font">CAR CLASS</div>
+            <div id="hud-meta">
+                <span>Width: <strong id="hud-width">36 PX</strong></span>
+                <span>Length: <strong id="hud-length">0.00 KM</strong></span>
+            </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+            <a id="back-btn" href="javascript:history.back()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Editor
+            </a>
+            <div class="hud-card" style="text-align:right;">
+                <div class="hud-stat-label">Speed</div>
+                <div id="hud-speed" class="f1-font">0 km/h</div>
+                <div id="hud-lap" class="f1-font">LAP 1</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Track Dimensions Tuning Dock -->
+    <div id="tuning-dock">
+        <div id="race-tuning-panel" class="tuning-panel">
+            <!-- Alter Track Width -->
+            <div class="tuning-group">
+                <div class="tuning-label">
+                    <span>Track Width</span>
+                    <span style="color:#22d3ee;font-size:8px;">Min: 12 px</span>
+                </div>
+                <div class="tuning-control">
+                    <input type="range" id="race-width-slider" min="12" max="100" value="36" step="1" class="tuning-slider">
+                    <input type="number" id="race-width-input" min="12" max="120" value="36" class="tuning-input">
+                </div>
+                <span id="race-width-min-warn" class="min-warning">Min 12 px limit enforced</span>
+            </div>
+
+            <div style="width:1px;height:36px;background:rgba(255,255,255,0.1);"></div>
+
+            <!-- Alter Track Length -->
+            <div class="tuning-group">
+                <div class="tuning-label">
+                    <span>Track Length</span>
+                    <span id="race-length-unit-label" style="color:#3b82f6;font-size:8px;">KM</span>
+                </div>
+                <div class="tuning-control">
+                    <input type="number" id="race-length-input" step="0.01" min="0.01" placeholder="e.g. 5.50" class="tuning-input" style="width:84px;">
+                    <button id="race-apply-length-btn" class="tuning-btn">Apply</button>
+                </div>
+            </div>
+        </div>
+        <button id="toggle-tuning-btn" class="tuning-toggle-btn">
+            <span>Tune Track Dimensions</span>
+        </button>
+    </div>
+
+    <div id="race-error" class="hidden">
+        <h1>No Track To Race</h1>
+        <p style="max-width:380px;color:rgba(255,255,255,0.6);font-size:13px;line-height:1.6;">
+            We couldn't find a saved layout with at least two nodes. Head back to the
+            designer, draw your circuit, then hit <strong>Add &amp; Race</strong>.
+        </p>
+        <a href="f1track.html">Back to Designer</a>
+    </div>
+
+    <script src="native-bridge.js"></script>
+    <script src="race.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Architect — Update Notes</title>
+    <meta name="description" content="See everything new in Apex Architect, including premium memberships, tag controls, admin access, and workflow updates.">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #030407;
+            --surface: rgba(255, 255, 255, 0.03);
+            --surface-strong: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e2e8f0;
+            --muted: rgba(255, 255, 255, 0.6);
+            --red: #e10600;
+            --gold: #f59e0b;
+            --green: #4ade80;
+            --blue: #60a5fa;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 12% 18%, rgba(225, 6, 0, 0.09), transparent 32%),
+                radial-gradient(circle at 88% 22%, rgba(59, 130, 246, 0.08), transparent 28%),
+                radial-gradient(circle at 50% 78%, rgba(245, 158, 11, 0.06), transparent 30%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .f1-font { font-family: 'Orbitron', sans-serif; }
+
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 40px;
+            backdrop-filter: blur(18px);
+            background: rgba(3, 4, 7, 0.82);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-flag {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #ff1e00, #8d0200);
+            transform: skewX(-12deg);
+            box-shadow: 0 0 18px rgba(225, 6, 0, 0.35);
+        }
+
+        .nav-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-style: italic;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.65);
+            border: 1px solid transparent;
+            padding: 9px 16px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-link.active {
+            color: var(--gold);
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.24);
+        }
+
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 84px 24px 28px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            background: rgba(245, 158, 11, 0.08);
+            color: var(--gold);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .hero-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--gold);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+        }
+
+        .hero h1 {
+            margin-top: 28px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(38px, 5vw, 66px);
+            font-weight: 900;
+            text-transform: uppercase;
+            font-style: italic;
+            line-height: 1.03;
+            letter-spacing: -2px;
+        }
+
+        .hero h1 span { color: var(--gold); }
+
+        .hero p {
+            max-width: 720px;
+            margin: 18px auto 0;
+            color: var(--muted);
+            font-size: 16px;
+            line-height: 1.75;
+        }
+
+        .summary-strip {
+            max-width: 1200px;
+            margin: 20px auto 0;
+            padding: 0 24px;
+        }
+
+        .summary-card {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+            backdrop-filter: blur(18px);
+        }
+
+        .summary-item {
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .summary-label {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .summary-value {
+            margin-top: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 34px 24px 90px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .section-bar {
+            width: 6px;
+            height: 20px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #ff1e00, #f59e0b);
+        }
+
+        .section-title h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .update-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .update-card {
+            position: relative;
+            overflow: hidden;
+            padding: 24px;
+            border-radius: 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(18px);
+        }
+
+        .update-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(140deg, rgba(255,255,255,0.05), transparent 45%);
+            pointer-events: none;
+        }
+
+        .update-kicker {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+        }
+
+        .update-card h3 {
+            margin-top: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            line-height: 1.3;
+            text-transform: uppercase;
+        }
+
+        .update-card p {
+            margin-top: 12px;
+            color: var(--muted);
+            line-height: 1.75;
+            font-size: 15px;
+        }
+
+        .change-list {
+            margin-top: 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .change-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            color: rgba(255, 255, 255, 0.82);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .change-bullet {
+            flex: 0 0 auto;
+            width: 8px;
+            height: 8px;
+            margin-top: 7px;
+            border-radius: 999px;
+            background: currentColor;
+        }
+
+        .accent-red { color: #ff6b6b; }
+        .accent-green { color: var(--green); }
+        .accent-blue { color: var(--blue); }
+        .accent-gold { color: var(--gold); }
+
+        .timeline {
+            margin-top: 44px;
+            padding: 24px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+        }
+
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 18px;
+        }
+
+        .timeline-step {
+            padding: 18px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .timeline-step .step-label {
+            color: rgba(255,255,255,0.45);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .timeline-step h4 {
+            margin-top: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 15px;
+            text-transform: uppercase;
+            line-height: 1.4;
+        }
+
+        .timeline-step p {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .footer-cta {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+
+        .cta-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 24px 28px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(225, 6, 0, 0.12), rgba(245, 158, 11, 0.09));
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .cta-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+
+        .cta-box p {
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .cta-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .cta-link {
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: transform 0.2s, border-color 0.2s, background 0.2s;
+        }
+
+        .cta-link:hover { transform: translateY(-2px); }
+
+        .cta-primary {
+            background: linear-gradient(135deg, #e10600, #ff4d4d);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .cta-secondary {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        @media (max-width: 980px) {
+            .summary-card,
+            .update-grid,
+            .timeline-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-box {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .top-nav {
+                padding: 14px 18px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .nav-links {
+                flex-wrap: wrap;
+            }
+
+            .hero {
+                padding-top: 54px;
+            }
+        }
+
+        /* ── Hamburger & Mobile Nav ── */
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+            background: none;
+            border: none;
+            padding: 8px;
+        }
+        .hamburger span {
+            width: 24px;
+            height: 2.5px;
+            background-color: #e2e8f0;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(10px, 10px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(7px, -7px); }
+        .nav-menu {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 0;
+            min-width: 200px;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        .nav-menu.active { display: flex; }
+        .nav-menu a, .nav-menu button {
+            padding: 12px 16px;
+            text-align: left;
+            border: none;
+            background: none;
+            color: #e2e8f0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .nav-menu a:hover, .nav-menu button:hover { background: rgba(255, 255, 255, 0.05); padding-left: 24px; }
+        .nav-menu a[href*="admin"] { color: #a855f7; }
+        .nav-menu a[href*="admin"]:hover { background: rgba(168, 85, 247, 0.1); }
+        .nav-menu a[href*="premium"] { color: #fbbf24; }
+        .nav-menu a[href*="premium"]:hover { background: rgba(251, 191, 36, 0.1); }
+        .nav-menu a[href*="glitch"] { color: #f97316; }
+        .nav-menu a[href*="glitch"]:hover { background: rgba(249, 115, 22, 0.1); }
+        .nav-menu .user-info { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; }
+        .nav-menu .user-avatar { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; }
+        .nav-links { display: none !important; }
+    </style>
+</head>
+
+<body>
+    <nav class="top-nav">
+        <a href="index.html" class="nav-logo">
+            <div class="nav-flag"></div>
+            <div class="nav-title">Apex Architect</div>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Workspace</a>
+            <a href="premium.html" class="nav-link">Premium</a>
+            <a href="tutorial.html" class="nav-link" target="_blank">Tutorial</a>
+            <a href="glitch.html" class="nav-link" style="color:#f97316;border-color:rgba(249,115,22,0.2);">Report Glitch</a>
+            <a href="admin.html" id="admin-nav-btn" class="nav-link" style="display:none;color:#a855f7;">Admin</a>
+            <a href="update.html" class="nav-link active">Updates</a>
+        </div>
+
+        <!-- Hamburger -->
+        <button class="hamburger" id="hamburger-btn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <!-- Mobile Menu -->
+        <nav class="nav-menu" id="nav-menu">
+            <div id="user-profile-mobile" class="user-info" style="display:none;">
+                <div class="user-avatar">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <span id="user-email-mobile" style="font-size:11px;letter-spacing:0.1em;font-weight:bold;text-transform:uppercase;"></span>
+            </div>
+            <a href="index.html">Dashboard</a>
+            <a href="premium.html">Premium</a>
+            <a href="tutorial.html" target="_blank">Tutorial</a>
+            <a href="glitch.html">Report Glitch</a>
+            <a href="admin.html" id="admin-btn-mobile" style="display:none;color:#a855f7;">Admin</a>
+            <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);"></div>
+            <button id="auth-btn-mobile" style="text-align:left;">Log In</button>
+        </nav>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="hero-dot"></span>
+            New From The Older Build
+        </div>
+        <h1>Everything <span>New</span> In Apex Architect</h1>
+        <p>
+            This update brings the premium subscription system, subscription-based track tags, rally-specific rules,
+            admin-controlled premium access, faster sign-in flow, and smarter track-length limits tied directly to the
+            selected racing class.
+        </p>
+    </section>
+
+    <section class="summary-strip">
+        <div class="summary-card">
+            <div class="summary-item">
+                <div class="summary-label">Membership Plans</div>
+                <div class="summary-value">3</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Tag Families</div>
+                <div class="summary-value">Circuit + Rally</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Admin Grants</div>
+                <div class="summary-value">Instant</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">Length Control</div>
+                <div class="summary-value">Per Tag</div>
+            </div>
+        </div>
+    </section>
+
+    <main class="content">
+        <div class="section-title">
+            <div class="section-bar"></div>
+            <h2>Major Changes</h2>
+        </div>
+
+        <div class="update-grid">
+            <article class="update-card">
+                <div class="update-kicker">Premium System</div>
+                <h3>New Subscription Bundles</h3>
+                <p>
+                    The older version did not have the final premium structure. The new version now separates premium
+                    access into clear bundles for circuit racing, rally racing, and the best-value all-access plan.
+                </p>
+                <div class="change-list">
+                    <div class="change-item accent-gold"><span class="change-bullet"></span><span>`Circuit / Formula Pro` includes F1 / F2 / F3, Go-Karting, GT Racing, Hypercar, and LMP / Le Mans.</span></div>
+                    <div class="change-item accent-gold"><span class="change-bullet"></span><span>`Rally Pro` includes rally track building with normal, stage, and raid rally formats.</span></div>
+                    <div class="change-item accent-gold"><span class="change-bullet"></span><span>`Apex Ultimate` combines every premium class into one plan.</span></div>
+                </div>
+            </article>
+
+            <article class="update-card">
+                <div class="update-kicker">Builder Upgrade</div>
+                <h3>Manual Track Tags By Subscription</h3>
+                <p>
+                    Premium users now see track tags inside the builder instead of the old free-mode text. The tag
+                    choices are based directly on the subscription that account has.
+                </p>
+                <div class="change-list">
+                    <div class="change-item accent-red"><span class="change-bullet"></span><span>Circuit subscribers can select from the full circuit-class tag group.</span></div>
+                    <div class="change-item accent-red"><span class="change-bullet"></span><span>Rally subscribers get rally tag controls and rally format options.</span></div>
+                    <div class="change-item accent-red"><span class="change-bullet"></span><span>Free users can still build tracks, but premium users now get direct manual tag control.</span></div>
+                </div>
+            </article>
+
+            <article class="update-card">
+                <div class="update-kicker">Rally Logic</div>
+                <h3>Rally Formats Now Behave Properly</h3>
+                <p>
+                    The builder now respects the difference between closed and open rally layouts, so rally design no
+                    longer behaves like a normal closed circuit when it should not.
+                </p>
+                <div class="change-list">
+                    <div class="change-item accent-green"><span class="change-bullet"></span><span>`Normal Rally SS` supports 1 to 2 km closed sections.</span></div>
+                    <div class="change-item accent-green"><span class="change-bullet"></span><span>`Stage Rally` supports 3 to 50 km open sections with 300 to 350 km total event distance.</span></div>
+                    <div class="change-item accent-green"><span class="change-bullet"></span><span>`Raid Rally` supports 100 to 800 km open sectors with 3,000 to 8,000 km total distance.</span></div>
+                    <div class="change-item accent-green"><span class="change-bullet"></span><span>The close-circuit button is hidden for open rally formats.</span></div>
+                </div>
+            </article>
+
+
+            <article class="update-card">
+                <div class="update-kicker">Length Rules</div>
+                <h3>Track Length Is Now Limited By Tag</h3>
+                <p>
+                    The old fixed maximum length is gone. Track size now follows the chosen tag so each racing class has
+                    the correct build range.
+                </p>
+                <div class="change-list">
+                    <div class="change-item accent-green"><span class="change-bullet"></span><span>F1 / F2 / F3, GT, Hypercar, and LMP follow 3 to 7 km rules.</span></div>
+                    <div class="change-item accent-green"><span class="change-bullet"></span><span>Go-Karting follows 0.3 to 5 km rules.</span></div>
+                    <div class="change-item accent-green"><span class="change-bullet"></span><span>Rally formats each use their own minimum and maximum ranges.</span></div>
+                    <div class="change-item accent-green"><span class="change-bullet"></span><span>The builder now warns when the layout is too short or too long for the selected class.</span></div>
+                </div>
+            </article>
+
+    
+        </div>
+
+        <section class="timeline">
+            <div class="section-title" style="margin-bottom:0;">
+                <div class="section-bar"></div>
+                <h2>Old Vs New Flow</h2>
+            </div>
+            <div class="timeline-grid">
+                <div class="timeline-step">
+                    <div class="step-label">Before</div>
+                    <h4>Older Builder Behavior</h4>
+                    <p>
+                        The older version mainly stayed in AI detection mode, had no finished premium tag flow, and did
+                        not fully connect admin premium rights to the builder experience.
+                    </p>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-label">Now</div>
+                    <h4>Subscription-Aware Builder</h4>
+                    <p>
+                        The builder now reads the account membership, shows the correct tag controls, applies rally
+                        restrictions, and respects the selected class when building.
+                    </p>
+                </div>
+                <div class="timeline-step">
+                    <div class="step-label">Result</div>
+                    <h4>Cleaner Premium Workflow</h4>
+                    <p>
+                        Premium access, admin grants, login, manual tagging, and class-based build rules now work
+                        together as one consistent system.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <section class="footer-cta">
+        <div class="cta-box">
+            <div>
+                <h3>Ready To Try The New Build?</h3>
+                <p>
+                    Open the premium page to review plans, jump into the builder to test tag-based layouts, or use the
+                    admin panel to grant access for testing.
+                </p>
+            </div>
+            <div class="cta-links">
+                <a href="premium.html" class="cta-link cta-primary">Open Premium</a>
+                <a href="f1track.html?new=true" class="cta-link cta-secondary">Start New Track</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Acknowledge Section -->
+    <section class="acknowledge-section" style="max-width:1200px;margin:0 auto;padding:0 24px 80px;text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:14px;padding:16px 28px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);backdrop-filter:blur(12px);">
+            <span style="font-size:13px;color:rgba(255,255,255,0.55);">You won't see this again until the next update.</span>
+            <a href="index.html" id="back-to-workspace-btn" class="cta-link cta-primary" style="text-decoration:none;padding:10px 28px;">
+                Back to Workspace
+            </a>
+        </div>
+        <footer
+            class="py-3 border-t border-white/5 text-center text-[10px] text-white/30 tracking-[0.3em] font-bold uppercase">
+            APEX ARCHITECT DESIGN SYSTEMS &copy; 2026
+        </footer>
+        <footer class="text-center text-[10px] text-white/30 tracking-[0.3em] font uppercase">
+            V - 2.0
+        </footer>
+    </section>
+
+    <script>
+        // ── Hamburger Menu Handler ─────────────────────────────────────────
+        const hamburger = document.getElementById('hamburger-btn');
+        const navMenu = document.getElementById('nav-menu');
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+        document.querySelectorAll('.nav-menu a, .nav-menu button').forEach(item => {
+            item.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            });
+        });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.hamburger') && !e.target.closest('.nav-menu')) {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            }
+        });
+
+        (async function () {
+            // Mobile menu auth
+            try {
+                const { data: { session } } = await window.supabase.auth.getSession();
+                if (session) {
+                    const userProfileMobile = document.getElementById('user-profile-mobile');
+                    const userEmailMobile = document.getElementById('user-email-mobile');
+                    const authBtnMobile = document.getElementById('auth-btn-mobile');
+                    userProfileMobile.style.display = 'flex';
+                    userEmailMobile.textContent = session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || '';
+                    authBtnMobile.textContent = 'Log Out';
+                    authBtnMobile.onclick = async () => { await ApexAuth.signOut(); window.location.replace('login.html'); };
+                }
+            } catch (e) { /* ignore */ }
+
+            // Check if admin and show admin button
+            try {
+                const isAdmin = await ApexAdmin.isAdmin();
+                if (isAdmin) {
+                    const adminBtn = document.getElementById('admin-nav-btn');
+                    if (adminBtn) adminBtn.style.display = 'inline-block';
+                    const adminBtnMobile = document.getElementById('admin-btn-mobile');
+                    if (adminBtnMobile) adminBtnMobile.style.display = 'block';
+                }
+            } catch (e) { /* ignore */ }
+
+            const btn = document.getElementById('back-to-workspace-btn');
+
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                ApexUpdate.acknowledge();
+                window.location.href = 'index.html';
+            });
+
+        })();
+    </script>
+</body>
+
+</html>

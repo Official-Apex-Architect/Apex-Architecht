@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Architect — Report a Glitch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --red: #e10600;
+            --bg: #030407;
+            --surface: #06080d;
+            --surface2: #0b0f19;
+            --border: rgba(255, 255, 255, 0.04);
+            --text: #e2e8f0;
+            --text-muted: rgba(255, 255, 255, 0.45);
+            --orange: #f97316;
+            --orange-glow: rgba(249, 115, 22, 0.3);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 40%, rgba(249, 115, 22, 0.06), transparent 35%),
+                radial-gradient(circle at 80% 60%, rgba(225, 6, 0, 0.05), transparent 35%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .f1-font { font-family: 'Orbitron', sans-serif; }
+
+        .top-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(20px);
+            background: rgba(3, 4, 7, 0.8);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .nav-flag {
+            width: 32px;
+            height: 32px;
+            background: var(--orange);
+            border-radius: 4px;
+            transform: skewX(-10deg);
+            box-shadow: 0 0 20px var(--orange-glow);
+        }
+
+        .nav-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            font-style: italic;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: none;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .glitch-container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 64px 24px 80px;
+        }
+
+        .glitch-header {
+            margin-bottom: 48px;
+        }
+
+        .glitch-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 100px;
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.25);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--orange);
+            margin-bottom: 20px;
+        }
+
+        .glitch-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--orange);
+            box-shadow: 0 0 8px var(--orange);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .glitch-header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            font-style: italic;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        .glitch-header p {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+            max-width: 540px;
+        }
+
+        .glitch-form {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 14px 16px;
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: rgba(249, 115, 22, 0.5);
+            background: rgba(249, 115, 22, 0.03);
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        .form-select option {
+            background: #0b0f19;
+            color: var(--text);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+            line-height: 1.6;
+        }
+
+        .severity-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.4s;
+        }
+
+        .btn-submit:hover::before { left: 100%; }
+
+        .btn-submit:hover {
+            box-shadow: 0 0 30px rgba(249, 115, 22, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .feedback-msg {
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .feedback-msg.success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            color: #4ade80;
+            display: block;
+        }
+
+        .feedback-msg.error {
+            background: rgba(225, 6, 0, 0.1);
+            border: 1px solid rgba(225, 6, 0, 0.25);
+            color: #f87171;
+            display: block;
+        }
+
+        .page-footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.2);
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 640px) {
+            .top-nav { padding: 16px 20px; }
+            .glitch-container { padding: 40px 16px 60px; }
+            .glitch-header h1 { font-size: 26px; }
+            .glitch-form { padding: 24px; }
+            .severity-row { grid-template-columns: 1fr; }
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0b0e14; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* ── Hamburger & Mobile Nav ── */
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+            background: none;
+            border: none;
+            padding: 8px;
+        }
+        .hamburger span {
+            width: 24px;
+            height: 2.5px;
+            background-color: #e2e8f0;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(10px, 10px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(7px, -7px); }
+        .nav-menu {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 0;
+            min-width: 200px;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        .nav-menu.active { display: flex; }
+        .nav-menu a, .nav-menu button {
+            padding: 12px 16px;
+            text-align: left;
+            border: none;
+            background: none;
+            color: #e2e8f0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        .nav-menu a:hover, .nav-menu button:hover { background: rgba(255, 255, 255, 0.05); padding-left: 24px; }
+        .nav-menu a[href*="admin"] { color: #a855f7; }
+        .nav-menu a[href*="admin"]:hover { background: rgba(168, 85, 247, 0.1); }
+        .nav-menu a[href*="premium"] { color: #fbbf24; }
+        .nav-menu a[href*="premium"]:hover { background: rgba(251, 191, 36, 0.1); }
+        .nav-menu a[href*="glitch"] { color: #f97316; }
+        .nav-menu a[href*="glitch"]:hover { background: rgba(249, 115, 22, 0.1); }
+        .nav-menu .user-info { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; }
+        .nav-menu .user-avatar { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; }
+        .nav-links { display: none !important; }
+    </style>
+</head>
+
+<body>
+
+    <nav class="top-nav">
+        <a href="index.html" class="nav-logo">
+            <div class="nav-flag"></div>
+            <div class="nav-title">Report a Glitch</div>
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="premium.html" class="nav-link" style="color:#fbbf24;border-color:rgba(251,191,36,0.2);">Premium</a>
+            <a href="tutorial.html" class="nav-link" target="_blank">Tutorial</a>
+            <button id="auth-btn" class="nav-link">Log Out</button>
+        </div>
+
+        <!-- Hamburger -->
+        <button class="hamburger" id="hamburger-btn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <!-- Mobile Menu -->
+        <nav class="nav-menu" id="nav-menu">
+            <div id="user-profile-mobile" class="user-info" style="display:none;">
+                <div class="user-avatar">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <span id="user-email-mobile" style="font-size:11px;letter-spacing:0.1em;font-weight:bold;text-transform:uppercase;"></span>
+            </div>
+            <a href="index.html">Dashboard</a>
+            <a href="premium.html">Premium</a>
+            <a href="tutorial.html" target="_blank">Tutorial</a>
+            <a href="glitch.html">Report Glitch</a>
+            <a href="admin.html" id="admin-btn-mobile" style="display:none;color:#a855f7;">Admin</a>
+            <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);"></div>
+            <button id="auth-btn-mobile" style="text-align:left;">Log In</button>
+        </nav>
+    </nav>
+
+    <div class="glitch-container">
+        <div class="glitch-header">
+            <div class="glitch-badge">
+                <span class="dot"></span>
+                Bug Reports
+            </div>
+            <h1>Report a Glitch</h1>
+            <p>Found something broken? Let us know. Every report helps make Apex Architect better. Describe what happened and we'll look into it.</p>
+        </div>
+
+        <div class="glitch-form">
+            <div class="form-group">
+                <label class="form-label" for="glitch-title">Glitch Title</label>
+                <input class="form-input" id="glitch-title" type="text" placeholder="Short summary of the issue" autocomplete="off" maxlength="120">
+            </div>
+
+            <div class="severity-row">
+                <div class="form-group">
+                    <label class="form-label" for="glitch-category">Category</label>
+                    <select class="form-select" id="glitch-category">
+                        <option value="ui">UI / Visual</option>
+                        <option value="track_editor">Track Editor</option>
+                        <option value="3d_viewer">3D Viewer</option>
+                        <option value="race_sim">Race Simulator</option>
+                        <option value="auth">Login / Auth</option>
+                        <option value="premium">Premium</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="glitch-severity">Severity</label>
+                    <select class="form-select" id="glitch-severity">
+                        <option value="low">Low — Minor annoyance</option>
+                        <option value="medium" selected>Medium — Blocks a feature</option>
+                        <option value="high">High — App unusable</option>
+                        <option value="critical">Critical — Data loss / crash</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="glitch-steps">Steps to Reproduce</label>
+                <textarea class="form-textarea" id="glitch-steps" placeholder="1. Go to ...&#10;2. Click on ...&#10;3. See error" style="min-height:100px;"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="glitch-expected">What Did You Expect?</label>
+                <input class="form-input" id="glitch-expected" type="text" placeholder="Expected behaviour" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="glitch-actual">What Actually Happened?</label>
+                <textarea class="form-textarea" id="glitch-actual" placeholder="Describe what went wrong..." style="min-height:90px;"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="glitch-email">Your Email <span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0;">(optional — for follow-up)</span></label>
+                <input class="form-input" id="glitch-email" type="email" placeholder="you@example.com" autocomplete="off">
+            </div>
+
+            <button class="btn-submit" id="submit-btn" onclick="submitGlitch()">
+                Submit Glitch Report
+            </button>
+
+            <div class="feedback-msg" id="feedback-msg"></div>
+        </div>
+    </div>
+
+    <footer
+        class="py-3 border-t border-white/5 text-center text-[10px] text-white/30 tracking-[0.3em] font-bold uppercase">
+        APEX ARCHITECT DESIGN SYSTEMS &copy; 2026
+    </footer>
+    <footer class="text-center text-[10px] text-white/30 tracking-[0.3em] font uppercase">
+        V - 2.0
+    </footer>
+
+    <script>
+        // ── Hamburger Menu Handler ─────────────────────────────────────────
+        const hamburger = document.getElementById('hamburger-btn');
+        const navMenu = document.getElementById('nav-menu');
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+        document.querySelectorAll('.nav-menu a, .nav-menu button').forEach(item => {
+            item.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            });
+        });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.hamburger') && !e.target.closest('.nav-menu')) {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Auth: populate email if logged in
+        (async () => {
+            const { data: { user } } = await window.supabase.auth.getUser();
+            if (user) {
+                const emailInput = document.getElementById('glitch-email');
+                if (!emailInput.value) emailInput.value = user.email || '';
+            }
+            const authBtn = document.getElementById('auth-btn');
+            const authBtnMobile = document.getElementById('auth-btn-mobile');
+            const userProfileMobile = document.getElementById('user-profile-mobile');
+            const userEmailMobile = document.getElementById('user-email-mobile');
+            if (user) {
+                userProfileMobile.style.display = 'flex';
+                userEmailMobile.textContent = user.user_metadata?.display_name || user.email?.split('@')[0] || '';
+                authBtn.textContent = 'Log Out';
+                authBtn.onclick = async () => {
+                    await ApexAuth.signOut();
+                    window.location.replace('login.html');
+                };
+                authBtnMobile.textContent = 'Log Out';
+                authBtnMobile.onclick = async () => {
+                    await ApexAuth.signOut();
+                    window.location.replace('login.html');
+                };
+                try {
+                    const isAdmin = await ApexAdmin.isAdmin();
+                    const adminBtnMobile = document.getElementById('admin-btn-mobile');
+                    if (isAdmin && adminBtnMobile) adminBtnMobile.style.display = 'block';
+                } catch (e) { /* ignore */ }
+            } else {
+                authBtn.textContent = 'Log In';
+                authBtn.onclick = () => window.location.replace('login.html');
+                authBtnMobile.textContent = 'Log In';
+                authBtnMobile.onclick = () => window.location.replace('login.html');
+            }
+        })();
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        async function submitGlitch() {
+            const title = document.getElementById('glitch-title').value.trim();
+            const category = document.getElementById('glitch-category').value;
+            const severity = document.getElementById('glitch-severity').value;
+            const steps = document.getElementById('glitch-steps').value.trim();
+            const expected = document.getElementById('glitch-expected').value.trim();
+            const actual = document.getElementById('glitch-actual').value.trim();
+            const email = document.getElementById('glitch-email').value.trim();
+
+            const feedbackEl = document.getElementById('feedback-msg');
+            feedbackEl.className = 'feedback-msg';
+            feedbackEl.textContent = '';
+
+            if (!title) {
+                feedbackEl.textContent = 'Please enter a title for the glitch.';
+                feedbackEl.className = 'feedback-msg error';
+                return;
+            }
+            if (!actual) {
+                feedbackEl.textContent = 'Please describe what actually happened.';
+                feedbackEl.className = 'feedback-msg error';
+                return;
+            }
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            const { data: { user } } = await window.supabase.auth.getUser();
+
+            const { error } = await window.supabase
+                .from('glitch_reports')
+                .insert([{
+                    title: escapeHtml(title),
+                    category,
+                    severity,
+                    steps: escapeHtml(steps),
+                    expected: escapeHtml(expected),
+                    actual: escapeHtml(actual),
+                    reporter_email: email ? escapeHtml(email) : null,
+                    user_id: user?.id || null,
+                    status: 'open'
+                }]);
+
+            btn.disabled = false;
+            btn.textContent = 'Submit Glitch Report';
+
+            if (error) {
+                feedbackEl.textContent = '⚠️ Could not submit: ' + (error.message || 'Unknown error. Please try again.');
+                feedbackEl.className = 'feedback-msg error';
+            } else {
+                feedbackEl.textContent = '✅ Glitch reported — thank you! We\'ll look into it.';
+                feedbackEl.className = 'feedback-msg success';
+                document.getElementById('glitch-title').value = '';
+                document.getElementById('glitch-steps').value = '';
+                document.getElementById('glitch-expected').value = '';
+                document.getElementById('glitch-actual').value = '';
+            }
+        }
+
+        document.getElementById('glitch-title').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitGlitch();
+        });
+    </script>
+
+</body>
+</html>

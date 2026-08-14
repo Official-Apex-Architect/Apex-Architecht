@@ -1,0 +1,9 @@
+{
+  "name": "apex-architect-root",
+  "version": "1.0.0",
+  "description": "Apex Architect",
+  "scripts": {
+    "dev": "npm --prefix WebBundle start",
+    "start": "npm --prefix WebBundle start"
+  }
+}

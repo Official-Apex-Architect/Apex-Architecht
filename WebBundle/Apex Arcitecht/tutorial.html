@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Architect - Tutorial</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>window.ApexUpdate && ApexUpdate.redirect();</script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap');
+
+        body {
+            background-color: #030407;
+            color: #e2e8f0;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 15% 50%, rgba(225, 6, 0, 0.08), transparent 30%),
+                radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.08), transparent 30%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .f1-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(to bottom, rgba(3, 4, 7, 0.8), #030407), url('trackrea.png');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .hero-gradient::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(3, 4, 7, 0.8) 0%, rgba(3, 4, 7, 0.1) 100%);
+            pointer-events: none;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(225, 6, 0, 0.3);
+            transform: translateY(-6px);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), 0 0 24px rgba(225, 6, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e10600, #ff4d4d);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border-radius: 6px;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(225, 6, 0, 0.5);
+            transform: scale(1.03);
+        }
+
+        .step-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(225, 6, 0, 0.5);
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover .step-number {
+            color: rgba(225, 6, 0, 0.1);
+            opacity: 0.8;
+            transform: scale(1.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0b0e14;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+
+        /* ── Hamburger & Mobile Nav ── */
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 5px;
+            background: none;
+            border: none;
+            padding: 8px;
+            outline: none;
+        }
+        .hamburger span {
+            width: 24px;
+            height: 2.5px;
+            background-color: #e2e8f0;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+        .hamburger.active span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+        .nav-menu {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 0;
+            min-width: 200px;
+            z-index: 1000;
+            display: none !important;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .nav-menu.active { display: flex !important; }
+        .nav-menu a, .nav-menu button {
+            padding: 12px 16px;
+            text-align: left;
+            border: none;
+            background: none;
+            color: #e2e8f0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        .nav-menu a:hover, .nav-menu button:hover { background: rgba(255, 255, 255, 0.05); padding-left: 24px; }
+        .nav-menu a[href*="admin"] { color: #a855f7; }
+        .nav-menu a[href*="admin"]:hover { background: rgba(168, 85, 247, 0.1); }
+        .nav-menu a[href*="premium"] { color: #fbbf24; }
+        .nav-menu a[href*="premium"]:hover { background: rgba(251, 191, 36, 0.1); }
+        .nav-menu a[href*="glitch"] { color: #f97316; }
+        .nav-menu a[href*="glitch"]:hover { background: rgba(249, 115, 22, 0.1); }
+        .nav-menu .user-info { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; }
+        .nav-menu .user-avatar { width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; }
+        .nav-links { display: none !important; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- Header Section -->
+    <header class="relative h-[30vh] flex items-center px-12 overflow-hidden hero-gradient border-b border-white/5">
+        <div class="absolute top-0 right-0 p-8 z-20 flex items-center gap-4">
+            <!-- Hamburger Menu -->
+            <button class="hamburger" id="hamburger-btn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <!-- Mobile Menu -->
+            <nav class="nav-menu" id="nav-menu" style="display:none">
+                <div id="user-profile-mobile" class="user-info" style="display:none;">
+                    <div class="user-avatar">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <span id="user-email-mobile" style="font-size:11px;letter-spacing:0.1em;font-weight:bold;text-transform:uppercase;"></span>
+                </div>
+                <a href="index.html">Dashboard</a>
+                <a href="premium.html">Premium</a>
+                <a href="glitch.html">Report Glitch</a>
+                <a href="admin.html" id="admin-btn-mobile" style="display:none;color:#a855f7;">Admin</a>
+                <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);"></div>
+                <button id="auth-btn-mobile" style="text-align:left;">Log In</button>
+            </nav>
+        </div>
+
+        <div class="relative z-10 w-full max-w-7xl mx-auto flex flex-col justify-center">
+            <div class="flex items-center gap-5 mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-[#ff1e00] to-[#b00300] rounded-sm transform -skew-x-12 shadow-[0_0_30px_rgba(225,6,0,0.4)]"></div>
+                <h1 class="f1-font text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/60 uppercase italic drop-shadow-xl">
+                    Mission Control
+                </h1>
+            </div>
+            <p class="text-white/70 text-lg max-w-2xl tracking-[0.05em] uppercase font-light leading-relaxed">
+                Your comprehensive guide to mastering Apex Architect. Learn how to design, save, and export world-class circuits.
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 w-full max-w-5xl mx-auto px-6 py-16">
+        
+        <div class="space-y-12">
+            
+            <!-- Step 1 -->
+            <div class="glass-card p-8 relative overflow-hidden">
+                <div class="step-number">01</div>
+                <h2 class="f1-font text-2xl text-white tracking-[0.1em] uppercase mb-4 flex items-center gap-3">
+                    <svg class="w-6 h-6 text-[#e10600]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    Authentication & Setup
+                </h2>
+                <div class="text-white/70 space-y-3 leading-relaxed">
+                    <p>Welcome to Apex Architect! Before designing your circuits, you'll need to create an account.</p>
+                    <ul class="list-disc list-inside space-y-2 ml-2">
+                        <li>Click on <strong class="text-white">Log In</strong> from the main dashboard.</li>
+                        <li>Sign up with your email and a secure password.</li>
+                        <li><strong class="text-[#e10600]">Important:</strong> You must verify your email address. Check your inbox for a verification link from our system.</li>
+                        <li>Once verified, your circuits will be securely synced to the cloud, allowing access from anywhere.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="glass-card p-8 relative overflow-hidden">
+                <div class="step-number">02</div>
+                <h2 class="f1-font text-2xl text-white tracking-[0.1em] uppercase mb-4 flex items-center gap-3">
+                    <svg class="w-6 h-6 text-[#3b82f6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Creating a New Circuit
+                </h2>
+                <div class="text-white/70 space-y-3 leading-relaxed">
+                    <p>Start with a blank canvas to construct your masterpiece.</p>
+                    <ul class="list-disc list-inside space-y-2 ml-2">
+                        <li>On the Workspace Dashboard, click the bold <strong class="text-white">New Circuit</strong> button.</li>
+                        <li>You'll be transported to the Circuit Designer interface.</li>
+                        <li>Use the mouse to click and place track nodes on the map.</li>
+                        <li>The system will automatically connect your nodes, forming the track layout.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="glass-card p-8 relative overflow-hidden">
+                <div class="step-number">03</div>
+                <h2 class="f1-font text-2xl text-white tracking-[0.1em] uppercase mb-4 flex items-center gap-3">
+                    <svg class="w-6 h-6 text-[#10b981]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    Exporting Your Data (JSON & PNG)
+                </h2>
+                <div class="text-white/70 space-y-3 leading-relaxed">
+                    <p>Once your circuit is finalized, you can export it for external tools, simulators, or presentations.</p>
+                    <ul class="list-disc list-inside space-y-2 ml-2">
+                        <li><strong class="text-white">Export as JSON:</strong> In the designer, look for the <strong class="text-white">Export JSON</strong> option. This will download a structured file containing all your track's nodes and coordinate data, perfect for importing into a game engine or simulation software.</li>
+                        <li><strong class="text-white">Export as PNG:</strong> Click the <strong class="text-white">Export Image</strong> button to take a high-resolution snapshot of your track layout. This transparent image can be used for presentations, documents, or sharing with the community.</li>
+                        <li>All tracks are continuously synced to your account, so you can always return later to make edits or re-export.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+
+    </main>
+
+    <footer
+        class="py-3 border-t border-white/5 text-center text-[10px] text-white/30 tracking-[0.3em] font-bold uppercase">
+        APEX ARCHITECT DESIGN SYSTEMS &copy; 2026
+    </footer>
+    <footer class="text-center text-[10px] text-white/30 tracking-[0.3em] font uppercase">
+        V - 2.0
+    </footer>
+
+    <script>
+        // ── Hamburger Menu Handler ─────────────────────────────────────────
+        const hamburger = document.getElementById('hamburger-btn');
+        const navMenu = document.getElementById('nav-menu');
+        window.addEventListener('pageshow', () => {
+            hamburger.classList.remove('active');
+            navMenu.classList.remove('active');
+        });
+        function openMenu() {
+            hamburger.classList.add('active');
+            navMenu.classList.add('active');
+            navMenu.style.display = 'flex';
+        }
+        function closeMenu() {
+            hamburger.classList.remove('active');
+            navMenu.classList.remove('active');
+            navMenu.style.display = 'none';
+        }
+        hamburger.addEventListener('click', () => {
+            navMenu.classList.contains('active') ? closeMenu() : openMenu();
+        });
+        document.querySelectorAll('.nav-menu a, .nav-menu button').forEach(item => {
+            item.addEventListener('click', closeMenu);
+        });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.hamburger') && !e.target.closest('.nav-menu')) closeMenu();
+        });
+
+        (async () => {
+            try {
+                const { data: { user } } = await window.supabase.auth.getUser();
+                const authBtnMobile = document.getElementById('auth-btn-mobile');
+                const userProfileMobile = document.getElementById('user-profile-mobile');
+                const userEmailMobile = document.getElementById('user-email-mobile');
+                if (user) {
+                    userProfileMobile.style.display = 'flex';
+                    userEmailMobile.textContent = user.user_metadata?.display_name || user.email?.split('@')[0] || '';
+                    authBtnMobile.textContent = 'Log Out';
+                    authBtnMobile.onclick = async () => { await ApexAuth.signOut(); window.location.replace('login.html'); };
+                    const isAdmin = await ApexAdmin.isAdmin();
+                    const adminBtnMobile = document.getElementById('admin-btn-mobile');
+                    if (isAdmin && adminBtnMobile) adminBtnMobile.style.display = 'block';
+                } else {
+                    authBtnMobile.textContent = 'Log In';
+                    authBtnMobile.onclick = () => window.location.replace('login.html');
+                }
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+</body>
+</html>

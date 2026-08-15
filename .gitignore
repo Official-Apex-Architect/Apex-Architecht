@@ -18,3 +18,6 @@ WebBundle/Apex Arcitecht/config/
 # Xcode user-specific state
 xcuserdata/
 *.xcuserstate
+
+# Archives / backups
+*.zip

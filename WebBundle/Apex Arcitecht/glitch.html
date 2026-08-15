@@ -393,8 +393,6 @@
         .nav-menu a:hover, .nav-menu button:hover { background: rgba(255, 255, 255, 0.05); padding-left: 24px; }
         .nav-menu a[href*="admin"] { color: #a855f7; }
         .nav-menu a[href*="admin"]:hover { background: rgba(168, 85, 247, 0.1); }
-        .nav-menu a[href*="premium"] { color: #fbbf24; }
-        .nav-menu a[href*="premium"]:hover { background: rgba(251, 191, 36, 0.1); }
         .nav-menu a[href*="glitch"] { color: #f97316; }
         .nav-menu a[href*="glitch"]:hover { background: rgba(249, 115, 22, 0.1); }
         .nav-menu .user-info { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; }
@@ -412,7 +410,6 @@
         </a>
         <div class="nav-links">
             <a href="index.html" class="nav-link">Dashboard</a>
-            <a href="premium.html" class="nav-link" style="color:#fbbf24;border-color:rgba(251,191,36,0.2);">Premium</a>
             <a href="tutorial.html" class="nav-link" target="_blank">Tutorial</a>
             <button id="auth-btn" class="nav-link">Log Out</button>
         </div>
@@ -436,10 +433,8 @@
                 <span id="user-email-mobile" style="font-size:11px;letter-spacing:0.1em;font-weight:bold;text-transform:uppercase;"></span>
             </div>
             <a href="index.html">Dashboard</a>
-            <a href="premium.html">Premium</a>
             <a href="tutorial.html" target="_blank">Tutorial</a>
             <a href="glitch.html">Report Glitch</a>
-            <a href="admin.html" id="admin-btn-mobile" style="display:none;color:#a855f7;">Admin</a>
             <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);"></div>
             <button id="auth-btn-mobile" style="text-align:left;">Log In</button>
         </nav>
@@ -470,7 +465,6 @@
                         <option value="3d_viewer">3D Viewer</option>
                         <option value="race_sim">Race Simulator</option>
                         <option value="auth">Login / Auth</option>
-                        <option value="premium">Premium</option>
                         <option value="other">Other</option>
                     </select>
                 </div>

@@ -3,53 +3,25 @@
  * Apex Architect — 2D Track Racer
  * Loads a saved circuit (same localStorage store the designer writes to),
  * rebuilds its bezier centerline using the exact same maths as the editor,
- * and races a top-down car whose body style is chosen from the track's tags:
- *   f1_f2_f3 -> F1        |  rallying -> Rally car
- *   lmp / gt -> WEC       |  hypercar -> Hypercar
+ * and races a top-down F1 car around it.
  */
 
 const STORAGE_KEY = 'apex_projects_v1';
 const TRACK_WIDTH = 36;        // world units, matches the editor's main road
 const SAMPLES_PER_SEG = 60;    // bezier subdivisions per segment
 
-// ── Car class resolution from track tags ────────────────────────────────
+// ── Car class ───────────────────────────────────────────────────────────
 const CAR_CLASSES = {
     // `topKmh` is the real top speed used for the HUD; `grip` is the lateral
-    // grip multiplier (how fast the car can carry through corners — F1 > kart).
+    // grip multiplier (how fast the car can carry through corners).
     f1: {
         key: 'f1', label: 'Formula 1', accent: '#e10600',
         speed: 1.30, body: '#e10600', detail: '#111', length: 30, width: 13,
         topKmh: 340, grip: 1.30,
     },
-    rally: {
-        key: 'rally', label: 'Rally Car', accent: '#fbbf24',
-        speed: 1.00, body: '#1d4ed8', detail: '#f8fafc', length: 24, width: 16,
-        topKmh: 210, grip: 0.90,
-    },
-    wec: {
-        key: 'wec', label: 'WEC Prototype', accent: '#00b3ff',
-        speed: 1.18, body: '#0ea5e9', detail: '#0b1120', length: 30, width: 16,
-        topKmh: 330, grip: 1.15,
-    },
-    hyper: {
-        key: 'hyper', label: 'Hypercar', accent: '#facc15',
-        speed: 1.22, body: '#f5d020', detail: '#111', length: 28, width: 16,
-        topKmh: 350, grip: 1.10,
-    },
-    kart: {
-        key: 'kart', label: 'Go-Kart', accent: '#22c55e',
-        speed: 0.85, body: '#22c55e', detail: '#111', length: 18, width: 13,
-        topKmh: 130, grip: 1.00,
-    },
 };
 
-function resolveCarClass(tags) {
-    const t = (tags || []).map(s => String(s).toLowerCase());
-    if (t.includes('f1_f2_f3')) return CAR_CLASSES.f1;
-    if (t.includes('rallying')) return CAR_CLASSES.rally;
-    if (t.includes('hypercar')) return CAR_CLASSES.hyper;
-    if (t.includes('lmp') || t.includes('gt')) return CAR_CLASSES.wec;
-    if (t.includes('go_karting')) return CAR_CLASSES.kart;
+function resolveCarClass() {
     return CAR_CLASSES.f1;
 }
 
@@ -289,8 +261,7 @@ class TrackRacer {
         this.project = project;
         const data = project.data || {};
         this.isClosed = !!data.isClosedTrack;
-        this.tags = data.selectedTrackTags || [];
-        this.carClass = resolveCarClass(this.tags);
+        this.carClass = resolveCarClass();
         this.scaleUnit = data.scaleUnit || 'km';
         this.pxPerUnit = parseFloat(data.pxPerUnit) || 100;
         this.trackWidth = Math.max(MIN_TRACK_WIDTH, parseFloat(data.trackWidth) || 36);
@@ -768,76 +739,33 @@ class TrackRacer {
     paintBody(ctx, L, W, body, isHero) {
         const hl = L / 2, hw = W / 2;
         const detail = this.carClass.detail;
-        const kind = this.carClass.key;
 
-        if (kind === 'f1') {
-            // tyres
-            ctx.fillStyle = '#0a0a0a';
-            ctx.fillRect(-hl * 0.55, -hw - 3, hl * 0.30, 4);
-            ctx.fillRect(-hl * 0.55, hw - 1, hl * 0.30, 4);
-            ctx.fillRect(hl * 0.30, -hw - 3, hl * 0.30, 4);
-            ctx.fillRect(hl * 0.30, hw - 1, hl * 0.30, 4);
-            // narrow body
-            ctx.fillStyle = body;
-            ctx.beginPath();
-            ctx.moveTo(hl, 0);
-            ctx.lineTo(hl * 0.4, -hw * 0.45);
-            ctx.lineTo(-hl * 0.7, -hw * 0.5);
-            ctx.lineTo(-hl, -hw * 0.9);
-            ctx.lineTo(-hl, hw * 0.9);
-            ctx.lineTo(-hl * 0.7, hw * 0.5);
-            ctx.lineTo(hl * 0.4, hw * 0.45);
-            ctx.closePath();
-            ctx.fill();
-            // front wing
-            ctx.fillStyle = detail;
-            ctx.fillRect(hl - 2, -hw, 3, W);
-            // cockpit
-            ctx.fillStyle = detail;
-            ctx.beginPath();
-            ctx.ellipse(-hl * 0.1, 0, L * 0.10, W * 0.22, 0, 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            // closed-cockpit shapes for rally / wec / hyper / kart
-            ctx.fillStyle = body;
-            this.carPath(ctx, L, W);
-            ctx.fill();
-
-            // accent stripe
-            ctx.fillStyle = this.carClass.accent;
-            ctx.fillRect(-hl, -1.2, L, 2.4);
-
-            // windshield / cockpit
-            ctx.fillStyle = 'rgba(10,15,25,0.85)';
-            if (kind === 'wec' || kind === 'hyper') {
-                ctx.beginPath();
-                ctx.ellipse(hl * 0.08, 0, L * 0.16, hw * 0.62, 0, 0, Math.PI * 2);
-                ctx.fill();
-                // rear wing
-                ctx.fillStyle = detail;
-                ctx.fillRect(-hl - 1, -hw * 0.85, 3, W * 0.85);
-            } else if (kind === 'rally') {
-                ctx.fillRect(hl * 0.05, -hw * 0.6, L * 0.22, W * 0.6);
-                // roof + light pod
-                ctx.fillStyle = '#f1f5f9';
-                ctx.fillRect(hl - 2, -hw * 0.7, 2.5, W * 0.5);
-                ctx.fillStyle = this.carClass.accent;
-                ctx.fillRect(hl - 1.5, -2, 2, 4);
-            } else { // kart
-                ctx.fillStyle = detail;
-                ctx.beginPath();
-                ctx.arc(0, 0, hw * 0.5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // wheels
-            ctx.fillStyle = '#0a0a0a';
-            const wl = L * 0.18, ww = 3;
-            ctx.fillRect(-hl * 0.62, -hw - 1, wl, ww);
-            ctx.fillRect(-hl * 0.62, hw - 2, wl, ww);
-            ctx.fillRect(hl * 0.40, -hw - 1, wl, ww);
-            ctx.fillRect(hl * 0.40, hw - 2, wl, ww);
-        }
+        // tyres
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(-hl * 0.55, -hw - 3, hl * 0.30, 4);
+        ctx.fillRect(-hl * 0.55, hw - 1, hl * 0.30, 4);
+        ctx.fillRect(hl * 0.30, -hw - 3, hl * 0.30, 4);
+        ctx.fillRect(hl * 0.30, hw - 1, hl * 0.30, 4);
+        // narrow body
+        ctx.fillStyle = body;
+        ctx.beginPath();
+        ctx.moveTo(hl, 0);
+        ctx.lineTo(hl * 0.4, -hw * 0.45);
+        ctx.lineTo(-hl * 0.7, -hw * 0.5);
+        ctx.lineTo(-hl, -hw * 0.9);
+        ctx.lineTo(-hl, hw * 0.9);
+        ctx.lineTo(-hl * 0.7, hw * 0.5);
+        ctx.lineTo(hl * 0.4, hw * 0.45);
+        ctx.closePath();
+        ctx.fill();
+        // front wing
+        ctx.fillStyle = detail;
+        ctx.fillRect(hl - 2, -hw, 3, W);
+        // cockpit
+        ctx.fillStyle = detail;
+        ctx.beginPath();
+        ctx.ellipse(-hl * 0.1, 0, L * 0.10, W * 0.22, 0, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 

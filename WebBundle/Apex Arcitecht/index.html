@@ -249,13 +249,7 @@
             background: rgba(168, 85, 247, 0.1);
         }
 
-        .nav-menu a[href*="premium"] {
-            color: #fbbf24;
-        }
 
-        .nav-menu a[href*="premium"]:hover {
-            background: rgba(251, 191, 36, 0.1);
-        }
 
         .nav-menu a[href*="glitch"] {
             color: #f97316;
@@ -316,14 +310,6 @@
         <div class="absolute top-0 right-0 p-8 z-20 flex items-center gap-4">
             <!-- Desktop Navigation Links -->
             <div class="nav-links flex items-center gap-4">
-                <a href="admin.html" id="admin-btn"
-                    class="hidden glass-card px-6 py-2.5 rounded-md text-[11px] text-[#a855f7] tracking-[0.2em] uppercase font-bold hover:text-white hover:bg-[#a855f7]/10 transition-colors border border-[#a855f7]/20 hover:border-[#a855f7]/50 shadow-lg">
-                    Admin
-                </a>
-                <a href="premium.html"
-                    class="glass-card px-6 py-2.5 rounded-md text-[11px] text-[#fbbf24] tracking-[0.2em] uppercase font-bold hover:text-white hover:bg-white/5 transition-colors border border-[#fbbf24]/20 hover:border-[#fbbf24]/50">
-                    Premium
-                </a>
                 <a href="tutorial.html" target="_blank"
                     class="glass-card px-6 py-2.5 rounded-md text-[11px] text-white/70 tracking-[0.2em] uppercase font-bold hover:text-white hover:bg-white/5 transition-colors border border-transparent hover:border-white/20">
                     Tutorial
@@ -367,8 +353,6 @@
                     </div>
                     <span id="user-email-mobile" class="text-[11px] tracking-[0.1em] font-bold uppercase"></span>
                 </div>
-                <a href="admin.html" id="admin-btn-mobile" class="hidden">Admin</a>
-                <a href="premium.html">Premium</a>
                 <a href="tutorial.html" target="_blank">Tutorial</a>
                 <a href="glitch.html">Report Glitch</a>
                 <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);"></div>
@@ -477,7 +461,6 @@
             }
 
             // ── Update Redirect ───────────────────────────────────────────
-            ApexUpdate.redirect();
 
             const currentAccountName = window.ApexNativeBridge?.accountName?.() || '';
             const currentUser = {
@@ -501,14 +484,6 @@
             userProfileMobile.classList.add('flex');
             userEmailMobile.textContent = currentUser.displayName;
 
-            // Check and show Admin button if user is admin
-            const isAdmin = await ApexAdmin.isAdmin();
-            if (isAdmin) {
-                const adminBtn = document.getElementById('admin-btn');
-                const adminBtnMobile = document.getElementById('admin-btn-mobile');
-                if (adminBtn) adminBtn.classList.remove('hidden');
-                if (adminBtnMobile) adminBtnMobile.classList.remove('hidden');
-            }
 
             authBtn.textContent = 'Log Out';
             authBtnMobile.textContent = 'Log Out';

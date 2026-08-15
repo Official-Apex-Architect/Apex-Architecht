@@ -158,21 +158,6 @@
             50%, 100% { left: 140%; }
         }
 
-        /* 3D Beta Button Cyan Glow */
-        #view-3d-btn {
-            background: rgba(6, 182, 212, 0.12);
-            border-color: rgba(34, 211, 238, 0.4);
-            color: #a5f3fc;
-            box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
-        }
-
-        #view-3d-btn:hover {
-            background: rgba(6, 182, 212, 0.25);
-            border-color: rgba(34, 211, 238, 0.8);
-            color: #ffffff;
-            box-shadow: 0 0 22px rgba(6, 182, 212, 0.6);
-            transform: translateY(-2px);
-        }
 
         /* Auto-Close Beacon Animation */
         .beacon-ping {
@@ -440,7 +425,7 @@
                 </span>
                 <div class="flex items-center gap-2.5">
                     <span id="selected-track-tags"
-                        class="text-[9px] font-bold tracking-widest text-[#a855f7]">SELECT TRACK TAGS</span>
+                        class="text-[9px] font-bold tracking-widest text-[#a855f7]">AI DETECTS: EVALUATING...</span>
                     <span class="h-3 w-px bg-white/10"></span>
                     <span id="track-length" class="text-white/80 text-xs f1-font font-bold">0.00 KM</span>
                 </div>
@@ -468,7 +453,7 @@
                 </button>
             </div>
 
-            <!-- Group 4: Simulation & 3D Hero Launchers -->
+            <!-- Group 4: Simulation Launcher -->
             <div class="flex items-center gap-2">
                 <button id="race-add-btn" class="btn-ui text-white" title="Race a 2D car on your track">
                     <span class="race-shine"></span>
@@ -476,11 +461,6 @@
                     <span class="relative z-10">Add &amp; Race</span>
                 </button>
 
-                <button id="view-3d-btn" class="hidden btn-ui" title="Beta: view your track in 3D with elevation">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 7.5l-9-5-9 5m18 0l-9 5m9-5v9l-9 5m0-9l-9-5m9 5v9" /></svg>
-                    <span>View in 3D</span>
-                    <span class="bg-cyan-400 text-black text-[7px] font-bold px-1 py-0.5 rounded tracking-wider ml-0.5">BETA</span>
-                </button>
             </div>
 
             <!-- Group 5: Clear Reset Button -->
@@ -502,16 +482,16 @@
             <div class="sidebar-scroller overflow-y-auto p-4 flex flex-col gap-4 flex-1">
                 <div class="sidebar-section">
                     <div class="mb-3">
-                        <label class="text-[10px] uppercase font-bold tracking-widest text-[#a855f7] block">Track Tags</label>
-                        <p class="mt-1 text-[10px] text-white/35">Choose the racing classes this layout is being built for. Rallying cannot be mixed with circuit tags.</p>
+                        <label class="text-[10px] uppercase font-bold tracking-widest text-[#a855f7] block">Circuit Class</label>
+                        <p class="mt-1 text-[10px] text-white/35">Every layout is built to F1 circuit spec: 3-7 km, closed circuit.</p>
                     </div>
                     <div class="space-y-3">
-                        <div id="membership-tag-note" class="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[10px] text-white/55">
-                            Loading membership tags...
+                        <div class="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[10px] text-white/55">
+                            <span class="font-bold text-[#a855f7]">F1 GRADE 1</span> &mdash; 3-7 km closed circuit.
                         </div>
-                        <div id="track-tag-selector" class="space-y-2"></div>
-                        <div id="rally-format-selector" class="space-y-2"></div>
-                        <div id="selected-tag-rules" class="text-[10px] leading-5 text-white/35"></div>
+                        <div class="rounded-xl border border-dashed border-white/10 bg-black/10 px-3 py-2 text-[10px] text-white/40">
+                            More exciting features coming soon.
+                        </div>
                     </div>
                 </div>
 
@@ -913,7 +893,7 @@
                                     <span>-100 m</span><span>Datum</span><span>+100 m</span>
                                 </div>
                                 <p class="mt-2 text-[9px] leading-4 text-white/35">
-                                    Set height then hit <span class="text-cyan-300/80 font-bold">View in 3D</span> to fly your circuit.
+                                    Set node height to shape elevation across your circuit.
                                 </p>
                             </div>
                         </div>
@@ -975,7 +955,6 @@
             if (!rawUser) { window.location.replace('login.html'); return; }
 
             // ── Update Redirect ─────────────────────────────────────────
-            ApexUpdate.redirect();
 
             const user = {
                 id: rawUser.id,

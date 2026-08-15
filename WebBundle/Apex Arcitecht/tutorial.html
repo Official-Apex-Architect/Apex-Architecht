@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-client.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>window.ApexUpdate && ApexUpdate.redirect();</script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&display=swap');
 
@@ -170,8 +169,6 @@
         .nav-menu a:hover, .nav-menu button:hover { background: rgba(255, 255, 255, 0.05); padding-left: 24px; }
         .nav-menu a[href*="admin"] { color: #a855f7; }
         .nav-menu a[href*="admin"]:hover { background: rgba(168, 85, 247, 0.1); }
-        .nav-menu a[href*="premium"] { color: #fbbf24; }
-        .nav-menu a[href*="premium"]:hover { background: rgba(251, 191, 36, 0.1); }
         .nav-menu a[href*="glitch"] { color: #f97316; }
         .nav-menu a[href*="glitch"]:hover { background: rgba(249, 115, 22, 0.1); }
         .nav-menu .user-info { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; }
@@ -203,9 +200,7 @@
                     <span id="user-email-mobile" style="font-size:11px;letter-spacing:0.1em;font-weight:bold;text-transform:uppercase;"></span>
                 </div>
                 <a href="index.html">Dashboard</a>
-                <a href="premium.html">Premium</a>
                 <a href="glitch.html">Report Glitch</a>
-                <a href="admin.html" id="admin-btn-mobile" style="display:none;color:#a855f7;">Admin</a>
                 <div style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);"></div>
                 <button id="auth-btn-mobile" style="text-align:left;">Log In</button>
             </nav>
@@ -334,9 +329,6 @@
                     userEmailMobile.textContent = user.user_metadata?.display_name || user.email?.split('@')[0] || '';
                     authBtnMobile.textContent = 'Log Out';
                     authBtnMobile.onclick = async () => { await ApexAuth.signOut(); window.location.replace('login.html'); };
-                    const isAdmin = await ApexAdmin.isAdmin();
-                    const adminBtnMobile = document.getElementById('admin-btn-mobile');
-                    if (isAdmin && adminBtnMobile) adminBtnMobile.style.display = 'block';
                 } else {
                     authBtnMobile.textContent = 'Log In';
                     authBtnMobile.onclick = () => window.location.replace('login.html');
